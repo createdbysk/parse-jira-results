@@ -1,0 +1,19 @@
+{
+  "name": "parse_jira_results",
+  "version": "0.0.1",
+  "description": "Parse results of jira filter",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha **/*.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fs": "0.0.2",
+    "linq": "^3.0.4-beta",
+    "requirejs": "^2.1.15"
+  },
+  "devDependencies": {
+    "mocha": "^2.0.1"
+  }
+}
