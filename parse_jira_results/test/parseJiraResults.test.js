@@ -8,90 +8,176 @@ expect = require('expect.js');
 requireInjector = require('./utilities/requireInjector.js');
 
 describe('parse jira results', function () {
-    'use strict';
-    var results,
-        injector,
-        issueStatusExtractor;
-
+    var injector;
     beforeEach(function (done) {
-        results = {  
-           "issues":[  
-            {
-                 "key":"SW-14155",
-                 "changelog":{  
-                    "histories":[  
-                       {  
-                          "created":"2014-12-01T15:58:25.000+0000",
-                          "items":[  
-                             {  
-                                "field":"status",
-                                "fieldtype":"jira",
-                                "from":"10002",
-                                "fromString":"Triage",
-                                "to":"1",
-                                "toString":"Open"
-                             }
-                            ]
-                        },
-                       {  
-                          "created":"2014-12-10T19:41:38.000+0000",
-                          "items":[  
-                             {  
-                                "field":"Component",
-                                "fieldtype":"jira",
-                                "from":null,
-                                "fromString":null,
-                                "to":"10650",
-                                "toString":"Filters"
-                             }
-                          ]
-                       },
-                       {  
-                          "created":"2014-12-18T12:12:21.000+0000",
-                          "items":[  
-                             {  
-                                "field":"status",
-                                "fieldtype":"jira",
-                                "from":"10002",
-                                "fromString":"Open",
-                                "to":"6",
-                                "toString":"Closed"
-                             }
-                          ]
-                       }
-                    ]
+        injector = requireInjector.createInjector();   
+        done();
+    });
+
+    describe('issue status extractor', function () {
+        'use strict';
+        var results,
+            issueStatusExtractor;
+
+        beforeEach(function (done) {
+            results = {  
+               "issues":[  
+                {
+                     "key":"SW-14155",
+                     "changelog":{  
+                        "histories":[  
+                           {  
+                              "created":"2014-12-01T15:58:25.000+0000",
+                              "items":[  
+                                 {  
+                                    "field":"status",
+                                    "fieldtype":"jira",
+                                    "from":"10002",
+                                    "fromString":"Triage",
+                                    "to":"1",
+                                    "toString":"Open"
+                                 }
+                                ]
+                            },
+                           {  
+                              "created":"2014-12-10T19:41:38.000+0000",
+                              "items":[  
+                                 {  
+                                    "field":"Component",
+                                    "fieldtype":"jira",
+                                    "from":null,
+                                    "fromString":null,
+                                    "to":"10650",
+                                    "toString":"Filters"
+                                 }
+                              ]
+                           },
+                           {  
+                              "created":"2014-12-18T12:12:21.000+0000",
+                              "items":[  
+                                 {  
+                                    "field":"status",
+                                    "fieldtype":"jira",
+                                    "from":"10002",
+                                    "fromString":"Open",
+                                    "to":"6",
+                                    "toString":"Closed"
+                                 }
+                              ]
+                           }
+                        ]
+                    }
                 }
-            }
-        ]};
-        injector = requireInjector.createInjector();
-        injector.require(['issueStatusExtractor'], function (theIssueStatusExtractor) {
-            issueStatusExtractor = theIssueStatusExtractor;
-            done();
+            ]};
+            injector.require(['issueStatusExtractor'], function (theIssueStatusExtractor) {
+                issueStatusExtractor = theIssueStatusExtractor;
+                done();
+            });
+        });
+        it('should extract the status', function (done) {
+            var expectedIssues;
+            expectedIssues = [
+                {
+                    key: "SW-14155",
+                    statuses: [
+                        {
+                            date: "2014-12-01T15:58:25.000+0000",
+                            from: "Triage",
+                            to: "Open"
+                        },
+                        {
+                            date: "2014-12-18T12:12:21.000+0000",
+                            from: "Open",
+                            to: "Closed"
+                        }
+                    ]
+                }        
+            ];
+
+            issueStatusExtractor(results, function (issues) {
+                expect(issues.toArray()).to.eql(expectedIssues);
+                done();
+            });
         });
     });
-    it('should extract the status', function (done) {
-        var expectedIssues;
-        expectedIssues = [
-            {
-                key: "SW-14155",
-                statuses: [
-                    {
-                        date: "2014-12-01T15:58:25.000+0000",
-                        from: "Triage",
-                        to: "Open"
-                    },
-                    {
-                        date: "2014-12-18T12:12:21.000+0000",
-                        from: "Open",
-                        to: "Closed"
-                    }
-                ]
-            }        
-        ];
 
-        issueStatusExtractor(results, function (issues) {
-            console.log(JSON.stringify(issues.toArray(), undefined, 4));
-            expect(issues.toArray()).to.eql(expectedIssues);
+    describe('status filter', function () {
+        'use strict';
+        var statuses,
+            statusFilter;
+        beforeEach(function (done) {
+            statuses = [
+                {
+                    date: "date1",
+                    from: "Triage",
+                    to: "Open"
+                },
+                {
+                    date: "date2",
+                    from: "Open",
+                    to: "In Design"
+                },
+                {
+                    date: "date3",
+                    from: "In Design",
+                    to: "In Progress"
+                },
+                {
+                    date: "date4",
+                    from: "In Progress",
+                    to: "In Test"
+                },
+                {
+                    date: "date5",
+                    from: "In Test",
+                    to: "Closed"
+                }
+            ];
+            
+            injector.require(['statusFilter'], function (theStatusFilter) {
+                statusFilter = theStatusFilter;
+                done();
+            });            
+        });
+        it('should filter the status given the predicate', function (done) {
+            var expectedStatuses;
+            expectedStatuses = [{
+                date: "date2",
+                from: "Open",
+                to: "In Design"
+            }];
+            statusFilter(statuses, 
+                function (status) {
+                    return status.date === "date2";
+                },
+                function (err, filteredStatuses) {
+                    expect(filteredStatuses.toArray()).to.eql(expectedStatuses);
+                    done();
+                }
+            );
+        });
+    });
+
+    describe('lead time calculator', function () {
+        'use strict';
+        var issue,
+            leadTimeCalculator;
+        beforeEach(function (done) {
+            injector.require(['leadTimeCalculator'], function (theLeadTimeCalculator) {
+                leadTimeCalculator = theLeadTimeCalculator;
+                done();
+            });
+        });
+        it('should calculate lead time given 2 dates', function (done) {
+            var expectedLeadTime,
+                startDate,
+                endDate,
+                leadTime;
+            expectedLeadTime = 17;
+            startDate = "2014-12-01T15:58:25.000+0000";
+            endDate = "2014-12-18T12:12:21.000+0000";
+            leadTime = leadTimeCalculator(startDate, endDate);
+            expect(leadTime).to.be(expectedLeadTime);
             done();
         });
     });
