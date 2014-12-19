@@ -94,7 +94,7 @@ describe('parse jira results', function () {
                 }        
             ];
 
-            issueStatusExtractor(results, function (issues) {
+            issueStatusExtractor(results, function (err, issues) {
                 expect(issues.toArray()).to.eql(expectedIssues);
                 done();
             });

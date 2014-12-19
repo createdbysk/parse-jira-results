@@ -17,6 +17,6 @@ define(['linq'], function (linq) {
                     })
                 return {key: issue.key, statuses: statuses.toArray()};
             });        
-        callback(issues);
+        callback(null, issues);
     };
 });
