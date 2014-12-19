@@ -69,7 +69,7 @@ describe('parse jira results', function () {
                     }
                 }
             ]};
-            injector.require(['issueStatusExtractor'], function (theIssueStatusExtractor) {
+            injector.require(['lib/issueStatusExtractor'], function (theIssueStatusExtractor) {
                 issueStatusExtractor = theIssueStatusExtractor;
                 done();
             });
@@ -134,7 +134,7 @@ describe('parse jira results', function () {
                 }
             ];
             
-            injector.require(['statusFilter'], function (theStatusFilter) {
+            injector.require(['lib/statusFilter'], function (theStatusFilter) {
                 statusFilter = theStatusFilter;
                 done();
             });            
@@ -163,7 +163,7 @@ describe('parse jira results', function () {
         var issue,
             leadTimeCalculator;
         beforeEach(function (done) {
-            injector.require(['leadTimeCalculator'], function (theLeadTimeCalculator) {
+            injector.require(['lib/leadTimeCalculator'], function (theLeadTimeCalculator) {
                 leadTimeCalculator = theLeadTimeCalculator;
                 done();
             });
