@@ -180,6 +180,30 @@ describe('parse jira results', function () {
             expect(leadTime).to.be(expectedLeadTime);
             done();
         });
+        it('should return null if startDate is null', function (done) {
+            var expectedLeadTime,
+                startDate,
+                endDate,
+                leadTime;
+            startDate = null;
+            expectedLeadTime = null;
+            endDate = "2014-12-18T12:12:21.000+0000";
+            leadTime = leadTimeCalculator(startDate, endDate);
+            expect(leadTime).to.be(expectedLeadTime);
+            done();
+        });
+        it('should return null if endDate is null', function (done) {
+            var expectedLeadTime,
+                startDate,
+                endDate,
+                leadTime;
+            startDate = "2014-12-18T12:12:21.000+0000";
+            expectedLeadTime = null;
+            endDate = null;
+            leadTime = leadTimeCalculator(startDate, endDate);
+            expect(leadTime).to.be(expectedLeadTime);
+            done();
+        });
     });
 });
 
