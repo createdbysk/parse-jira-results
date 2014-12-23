@@ -9,7 +9,7 @@ requirejs(['fs',
           'lib/statusFilter',
           'lib/leadTimeCalculator'], 
     function (fs, linq, moment, issueStatusExtractor, statusFilter, leadTimeCalculator) {
-        fs.readFile('test_input/SVS-500.txt', 'utf-8', function (err, resultsJSON) {
+        fs.readFile('test_input/SW-2000.txt', 'utf-8', function (err, resultsJSON) {
             var allResults,
                 leadTimes;
             allResults = JSON.parse(resultsJSON);
@@ -42,7 +42,7 @@ requirejs(['fs',
                                 );
                                 statusFilter(issue.statuses, 
                                     function (status) {
-                                        return status.to === "Closed" || status.to === "In Review";
+                                        return status.to === "Closed";
                                     },
                                     function (error, possibleExitPoints) {
                                         console.error("EXIT", JSON.stringify(possibleExitPoints.toArray(), undefined, 4));
@@ -66,7 +66,7 @@ requirejs(['fs',
                     if (record.leadTime) {
                         console.log('%s, %s, %s, %d', record.key, 
                                     moment(record.startDate).format('YYYY-MM-DD'), 
-                                    moment(record.startDate).format('YYYY-MM-DD'), 
+                                    moment(record.endDate).format('YYYY-MM-DD'), 
                                     record.leadTime);                            
                     }                        
                 });
