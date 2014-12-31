@@ -17,13 +17,18 @@ describe('parse jira results', function () {
     describe('issue status extractor', function () {
         'use strict';
         var results,
-            issueStatusExtractor;
+            issueStatusExtractor,
+            createdDate;
 
         beforeEach(function (done) {
+            createdDate = "2014-12-01T15:00:25.000+0000";
             results = {  
                "issues":[  
                 {
                      "key":"SW-14155",
+                     "fields" : {
+                        "created":createdDate
+                     },
                      "changelog":{  
                         "histories":[  
                            {  
@@ -79,6 +84,7 @@ describe('parse jira results', function () {
             expectedIssues = [
                 {
                     key: "SW-14155",
+                    createdDate: createdDate,
                     statuses: [
                         {
                             date: "2014-12-01T15:58:25.000+0000",
@@ -173,7 +179,7 @@ describe('parse jira results', function () {
                 startDate,
                 endDate,
                 leadTime;
-            expectedLeadTime = 17;
+            expectedLeadTime = 18;
             startDate = "2014-12-01T15:58:25.000+0000";
             endDate = "2014-12-18T12:12:21.000+0000";
             leadTime = leadTimeCalculator(startDate, endDate);
