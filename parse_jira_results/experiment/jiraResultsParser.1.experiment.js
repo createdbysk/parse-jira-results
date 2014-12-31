@@ -4,7 +4,7 @@ var fs,
     results;
 fs = require('fs');
 linq = require('linq');
-results = JSON.parse(fs.readFileSync('test_input/SW-14155.txt', 'utf-8'));
+results = JSON.parse(fs.readFileSync('test_input/SVS-20141230-1753.json', 'utf-8'));
 
 issues = linq.from(results.issues)
     .select(function (issue) {
@@ -21,6 +21,6 @@ issues = linq.from(results.issues)
                     });
                 return {date: history.created, status: status.toArray()};
             });
-        return {key: issue.key, statuses: statuses.toArray()};
+        return {key: issue.key, createdDate: issue.fields.created, statuses: statuses.toArray()};
     });
 console.log(JSON.stringify(issues.toArray(), undefined, 4));
