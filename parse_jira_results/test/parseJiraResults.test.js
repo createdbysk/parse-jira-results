@@ -16,92 +16,80 @@ describe('parse jira results', function () {
 
     describe('issue status extractor', function () {
         'use strict';
-        var results,
+        var issue,
             issueStatusExtractor,
             createdDate;
 
         beforeEach(function (done) {
             createdDate = "2014-12-01T15:00:25.000+0000";
-            results = {  
-               "issues":[  
-                {
-                     "key":"SW-14155",
-                     "fields" : {
-                        "created":createdDate
-                     },
-                     "changelog":{  
-                        "histories":[  
-                           {  
-                              "created":"2014-12-01T15:58:25.000+0000",
-                              "items":[  
-                                 {  
-                                    "field":"status",
-                                    "fieldtype":"jira",
-                                    "from":"10002",
-                                    "fromString":"Triage",
-                                    "to":"1",
-                                    "toString":"Open"
-                                 }
-                                ]
-                            },
-                           {  
-                              "created":"2014-12-10T19:41:38.000+0000",
-                              "items":[  
-                                 {  
-                                    "field":"Component",
-                                    "fieldtype":"jira",
-                                    "from":null,
-                                    "fromString":null,
-                                    "to":"10650",
-                                    "toString":"Filters"
-                                 }
-                              ]
-                           },
-                           {  
-                              "created":"2014-12-18T12:12:21.000+0000",
-                              "items":[  
-                                 {  
-                                    "field":"status",
-                                    "fieldtype":"jira",
-                                    "from":"10002",
-                                    "fromString":"Open",
-                                    "to":"6",
-                                    "toString":"Closed"
-                                 }
-                              ]
-                           }
-                        ]
-                    }
+            issue = {
+                 "changelog":{  
+                    "histories":[  
+                       {  
+                          "created":"2014-12-01T15:58:25.000+0000",
+                          "items":[  
+                             {  
+                                "field":"status",
+                                "fieldtype":"jira",
+                                "from":"10002",
+                                "fromString":"Triage",
+                                "to":"1",
+                                "toString":"Open"
+                             }
+                            ]
+                        },
+                       {  
+                          "created":"2014-12-10T19:41:38.000+0000",
+                          "items":[  
+                             {  
+                                "field":"Component",
+                                "fieldtype":"jira",
+                                "from":null,
+                                "fromString":null,
+                                "to":"10650",
+                                "toString":"Filters"
+                             }
+                          ]
+                       },
+                       {  
+                          "created":"2014-12-18T12:12:21.000+0000",
+                          "items":[  
+                             {  
+                                "field":"status",
+                                "fieldtype":"jira",
+                                "from":"10002",
+                                "fromString":"Open",
+                                "to":"6",
+                                "toString":"Closed"
+                             }
+                          ]
+                       }
+                    ]
                 }
-            ]};
+            };
             injector.require(['lib/issueStatusExtractor'], function (theIssueStatusExtractor) {
                 issueStatusExtractor = theIssueStatusExtractor;
                 done();
             });
         });
         it('should extract the status', function (done) {
-            var expectedIssues;
-            expectedIssues = [
-                {
-                    key: "SW-14155",
-                    createdDate: createdDate,
-                    statuses: [
-                        {
-                            date: "2014-12-01T15:58:25.000+0000",
-                            from: "Triage",
-                            to: "Open"
-                        },
-                        {
-                            date: "2014-12-18T12:12:21.000+0000",
-                            from: "Open",
-                            to: "Closed"
-                        }
-                    ]
-                }        
-            ];
+            var expectedStatuses;
+            expectedStatuses =
+                [
+                    {
+                        date: "2014-12-01T15:58:25.000+0000",
+                        from: "Triage",
+                        to: "Open"
+                    },
+                    {
+                        date: "2014-12-18T12:12:21.000+0000",
+                        from: "Open",
+                        to: "Closed"
+                    }
+                ];
 
-            issueStatusExtractor(results, function (err, issues) {
-                expect(issues.toArray()).to.eql(expectedIssues);
+            issueStatusExtractor(issue, function (err, statuses) {
+                expect(statuses.toArray()).to.eql(expectedStatuses);
                 done();
             });
         });
