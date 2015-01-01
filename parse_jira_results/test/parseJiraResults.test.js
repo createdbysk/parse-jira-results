@@ -5,7 +5,7 @@ var fs,
 fs = require('fs');
 linq = require('linq');
 expect = require('expect.js');
-requireInjector = require('./utilities/requireInjector.js');
+requireInjector = require('library/test_utilities/requireInjector');
 
 describe('parse jira results', function () {
     var injector;
