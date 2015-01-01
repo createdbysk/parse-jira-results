@@ -7,9 +7,10 @@ requirejs(['commander',
           'linq', 
           'moment',
           'lib/issueStatusExtractor', 
+          'lib/issueCreatedDateExtractor', 
           'lib/statusFilter',
           'lib/leadTimeCalculator'], 
-    function (program, fs, linq, moment, issueStatusExtractor, statusFilter, leadTimeCalculator) {
+    function (program, fs, linq, moment, issueStatusExtractor, issueCreatedDateExtractor, statusFilter, leadTimeCalculator) {
         'use strict';
         program
             .version('0.0.1')
@@ -20,9 +21,15 @@ requirejs(['commander',
                 allTransitions,
                 formatDate;
             formatDate = function (rawDate) {
-                return moment(rawDate).format("YYYY-MM-DD HH:MM:SS");
+                if (!rawDate) {
+                    console.error("Date to format is undefined");
+                }
+                return moment(rawDate).format("YYYY-MM-DD hh:mm:ss");
             }
             allResults = JSON.parse(resultsJSON);
+            if (!allResults.length) {
+                allResults = [allResults];
+            }
             console.error("Number of JIRA queries", allResults.length);
             allTransitions = linq.from(allResults)
                 .selectMany(function (results) {
@@ -34,7 +41,7 @@ requirejs(['commander',
                                 issueStatusExtractor(issue, function (err, statuses) {
                                     console.error("status count : ", statuses.count());
                                     allTransitionsForThisIssue = linq.from(statuses)
-                                        .aggregate(issue.key + ", Triage, " + formatDate(issue.createdDate),
+                                        .aggregate(issue.key + ", Triage, " + formatDate(issueCreatedDateExtractor(issue)),
                                                    function (csv, status) {
                                                         return csv + ", " + status.to + ", " + formatDate(status.date);
                                                     });
@@ -44,7 +51,10 @@ requirejs(['commander',
                             });
                     return allTransitionsForThisSet;
                 });
-            console.log(JSON.stringify(allTransitions.toArray(), undefined, 4));
+            linq.from(allTransitions)
+                .forEach(function (transition) {
+                    console.log(transition);
+                });
         });
     }
 );

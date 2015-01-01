@@ -95,7 +95,7 @@ describe('parse jira results', function () {
         });
     });
 
-    describe('get priority', function () {
+    describe('issue priority extractor', function () {
       'use strict';
       var issue,
           expectedPriority,
@@ -103,7 +103,7 @@ describe('parse jira results', function () {
       beforeEach(function (done) {
         expectedPriority = "thePrority";
         issue = {  
-         "key":"SW-14155",
+         "key":"issue-id",
          "fields":{  
             "priority":{  
                "self":"https://jira.dev.socialware.com/rest/api/2/priority/2",
@@ -122,6 +122,32 @@ describe('parse jira results', function () {
         var actualPriority;
         actualPriority = issuePriorityExtractor(issue);
         expect(actualPriority).to.be(expectedPriority);
+        done();
+      });
+    });
+
+    describe('issue created date extractor', function () {
+      'use strict';
+      var issue,
+          expectedCreatedDate,
+          issueCreatedDateExtractor;
+      beforeEach(function (done) {
+        expectedCreatedDate = "theCreatedDate";
+        issue = {  
+         "key":"issue-id",
+         "fields":{  
+            "created":expectedCreatedDate
+          }
+        };
+        injector.require(['lib/issueCreatedDateExtractor'], function (theIssueCreatedDateExtractor) {
+            issueCreatedDateExtractor = theIssueCreatedDateExtractor;
+            done();
+        });
+      });
+      it('should return the priority', function (done) {
+        var actualDate;
+        actualDate = issueCreatedDateExtractor(issue);
+        expect(actualDate).to.be(expectedCreatedDate);
         done();
       });
     });
@@ -238,7 +264,7 @@ describe('for later', function () {
         {  
            "issues":[  
             {
-                 "key":"SW-14155",
+                 "key":"issue-id",
                  "changelog":{  
                     "histories":[  
                        {  
