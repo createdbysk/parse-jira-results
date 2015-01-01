@@ -13,7 +13,8 @@
     "linq": "^3.0.4-beta",
     "requirejs": "^2.1.15",
     "moment": "^2.8.4",
-    "library": "git+ssh://git@bitbucket.org:satvidh/library.git#0.0.1"
+    "library": "git+ssh://git@bitbucket.org:satvidh/library.git#0.0.1",
+    "commander": "^2.6.0"
   },
   "devDependencies": {
     "mocha": "^2.0.1",

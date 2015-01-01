@@ -2,14 +2,18 @@
 var requirejs;
 requirejs = require('../configuredRequirejs.js');
 
-requirejs(['fs', 
+requirejs(['commander',
+          'fs', 
           'linq', 
           'moment',
           'lib/issueStatusExtractor', 
           'lib/statusFilter',
           'lib/leadTimeCalculator'], 
-    function (fs, linq, moment, issueStatusExtractor, statusFilter, leadTimeCalculator) {
-        fs.readFile('test_input/SW-2000.txt', 'utf-8', function (err, resultsJSON) {
+    function (program, fs, linq, moment, issueStatusExtractor, statusFilter, leadTimeCalculator) {
+        program
+            .version('0.0.1')
+            .parse(process.argv);
+        fs.readFile(program.args[0], 'utf-8', function (err, resultsJSON) {
             var allResults,
                 leadTimes;
             allResults = JSON.parse(resultsJSON);
