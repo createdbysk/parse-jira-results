@@ -23,6 +23,9 @@ describe('parse jira results', function () {
         beforeEach(function (done) {
             createdDate = "2014-12-01T15:00:25.000+0000";
             issue = {
+                 "fields": {
+                    "created":"createdDate"
+                 },
                  "changelog":{  
                     "histories":[  
                        {  
@@ -76,6 +79,11 @@ describe('parse jira results', function () {
             var expectedStatuses;
             expectedStatuses =
                 [
+                    {
+                        date: "createdDate",
+                        from: "Created",
+                        to: "Triage"
+                    },
                     {
                         date: "2014-12-01T15:58:25.000+0000",
                         from: "Triage",

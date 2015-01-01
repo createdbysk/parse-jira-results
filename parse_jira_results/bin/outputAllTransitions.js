@@ -41,7 +41,7 @@ requirejs(['commander',
                                 issueStatusExtractor(issue, function (err, statuses) {
                                     console.error("status count : ", statuses.count());
                                     allTransitionsForThisIssue = linq.from(statuses)
-                                        .aggregate(issue.key + ", Triage, " + formatDate(issueCreatedDateExtractor(issue)),
+                                        .aggregate(issue.key,
                                                    function (csv, status) {
                                                         return csv + ", " + status.to + ", " + formatDate(status.date);
                                                     });
