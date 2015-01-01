@@ -95,6 +95,37 @@ describe('parse jira results', function () {
         });
     });
 
+    describe('get priority', function () {
+      'use strict';
+      var issue,
+          expectedPriority,
+          issuePriorityExtractor;
+      beforeEach(function (done) {
+        expectedPriority = "thePrority";
+        issue = {  
+         "key":"SW-14155",
+         "fields":{  
+            "priority":{  
+               "self":"https://jira.dev.socialware.com/rest/api/2/priority/2",
+               "iconUrl":"https://jira.dev.socialware.com/images/icons/priorities/critical.png",
+               "name":expectedPriority,
+               "id":"2"
+            }
+          }
+        };
+        injector.require(['lib/issuePriorityExtractor'], function (theIssuePriorityExtractor) {
+            issuePriorityExtractor = theIssuePriorityExtractor;
+            done();
+        });
+      });
+      it('should return the priority', function (done) {
+        var actualPriority;
+        actualPriority = issuePriorityExtractor(issue);
+        expect(actualPriority).to.be(expectedPriority);
+        done();
+      });
+    });
+
     describe('status filter', function () {
         'use strict';
         var statuses,
