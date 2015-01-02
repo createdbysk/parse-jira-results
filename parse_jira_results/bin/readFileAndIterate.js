@@ -1,14 +1,10 @@
-define(['commander',
-          'fs', 
-          'linq'
-          ], 
-    function (program, fs, linq) {
-        return function (processFn, callback) {
+define(['fs', 
+        'linq'
+       ], 
+    function (fs, linq) {
+        return function (filename, processFn, callback) {
             'use strict';
-            program
-                .version('0.0.1')
-                .parse(process.argv);
-            fs.readFile(program.args[0], 'utf-8', function (err, resultsJSON) {
+            fs.readFile(filename, 'utf-8', function (err, resultsJSON) {
                 if (err) {
                     callback(err);
                 }

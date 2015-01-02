@@ -1,17 +1,18 @@
 var obj,
-    linq,
-    i,
-    f;
+    linq;
 linq = require('linq');
-f = function () {};
 obj = {
     two: "two",
-    one: f
+    one: "one"
 };
-
-i = 0;
 
 linq.from(obj)
     .forEach(function (keyValuePair, index) {
-        console.log(++i, arguments, keyValuePair, index);
+        console.log(keyValuePair, index);
+    });
+
+linq.from(obj)
+    .aggregate({}, function (combined, keyValuePair) {
+        console.log(combined, keyValuePair);
+        return combined;
     });

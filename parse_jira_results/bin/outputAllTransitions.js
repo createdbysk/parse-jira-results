@@ -1,19 +1,22 @@
 // ALWAYS RUN THIS WITH CURRENT WORKING DIRECTORY AS THE ROOT OF THIS PROJECT.
 var requirejs;
-requirejs = require('../configuredRequirejs.js');
+requirejs = require('library/configuredRequirejs');
 
-requirejs(['bin/readFileAndIterate',
+requirejs(['commander',
+          'bin/readFileAndIterate',
           'linq', 
           'moment',
           'lib/issueStatusExtractor', 
-          'lib/issueCreatedDateExtractor', 
           'lib/statusFilter',
           'lib/leadTimeCalculator'], 
-    function (readFileAndIterate, linq, moment, issueStatusExtractor, issueCreatedDateExtractor, statusFilter, leadTimeCalculator) {
+    function (program, readFileAndIterate, linq, moment, issueStatusExtractor, statusFilter, leadTimeCalculator) {
         'use strict';
         var processResults,
             displayResults,
             formatDate;
+        program
+            .version('0.0.1')
+            .parse(process.argv);
         formatDate = function (rawDate) {
             if (rawDate) {
                 return moment(rawDate).format("YYYY-MM-DD hh:mm:ss");
@@ -44,7 +47,7 @@ requirejs(['bin/readFileAndIterate',
                     console.log(transition);
                 });
         };
-        readFileAndIterate(processResults, displayResults);
+        readFileAndIterate(program.args[0], processResults, displayResults);
     }
 );
 

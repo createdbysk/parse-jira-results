@@ -1,16 +1,20 @@
 // ALWAYS RUN THIS WITH CURRENT WORKING DIRECTORY AS THE ROOT OF THIS PROJECT.
 var requirejs;
-requirejs = require('../configuredRequirejs.js');
+requirejs = require('library/configuredRequirejs');
 
-requirejs(['bin/readFileAndIterate',
+requirejs(['commander',
+          'bin/readFileAndIterate',
           'linq', 
           'moment',
           'lib/issueStatusExtractor', 
           'lib/statusFilter',
           'lib/leadTimeCalculator'], 
-    function (readFileAndIterate, linq, moment, issueStatusExtractor, statusFilter, leadTimeCalculator) {
+    function (program, readFileAndIterate, linq, moment, issueStatusExtractor, statusFilter, leadTimeCalculator) {
         var processResults,
             displayResults;
+        program
+            .version('0.0.1')
+            .parse(process.argv);
         processResults = function (results) {
             var leadTimesForThisSet;
             leadTimesForThisSet = 
@@ -67,7 +71,7 @@ requirejs(['bin/readFileAndIterate',
                     }                        
                 });
         };
-        readFileAndIterate(processResults, displayResults);
+        readFileAndIterate(program.args[0], processResults, displayResults);
     }
 );
 

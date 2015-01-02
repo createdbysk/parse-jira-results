@@ -1,11 +1,13 @@
 var fs,
     linq,
     expect,
-    requireInjector;
+    requireInjector,
+    sinon;
 fs = require('fs');
 linq = require('linq');
 expect = require('expect.js');
 requireInjector = require('library/test_utilities/requireInjector');
+sinon = require('sinon');
 
 describe('parse jira results', function () {
     var injector;
@@ -21,10 +23,11 @@ describe('parse jira results', function () {
             createdDate;
 
         beforeEach(function (done) {
+            var issueCreatedDateExtractor;
             createdDate = "2014-12-01T15:00:25.000+0000";
             issue = {
                  "fields": {
-                    "created":"createdDate"
+                    "created":createdDate
                  },
                  "changelog":{  
                     "histories":[  
@@ -70,7 +73,13 @@ describe('parse jira results', function () {
                     ]
                 }
             };
-            injector.require(['lib/issueStatusExtractor'], function (theIssueStatusExtractor) {
+            issueCreatedDateExtractor = sinon.stub();
+            issueCreatedDateExtractor
+              .withArgs(issue, sinon.match.typeOf('function'))
+              .callsArgWith(1, null, createdDate);
+            injector
+              .mock('lib/issueCreatedDateExtractor', issueCreatedDateExtractor)
+              .require(['lib/issueStatusExtractor'], function (theIssueStatusExtractor) {
                 issueStatusExtractor = theIssueStatusExtractor;
                 done();
             });
@@ -80,7 +89,7 @@ describe('parse jira results', function () {
             expectedStatuses =
                 [
                     {
-                        date: "createdDate",
+                        date: createdDate,
                         from: "Created",
                         to: "Triage"
                     },
@@ -127,10 +136,33 @@ describe('parse jira results', function () {
         });
       });
       it('should return the priority', function (done) {
-        var actualPriority;
-        actualPriority = issuePriorityExtractor(issue);
-        expect(actualPriority).to.be(expectedPriority);
-        done();
+        issuePriorityExtractor(issue, function (err, actualPriority) {
+          expect(actualPriority).to.be(expectedPriority);
+          done();
+        });
+      });
+    });
+
+    describe('issue name extractor', function () {
+      'use strict';
+      var issue,
+          expected,
+          extractor;
+      beforeEach(function (done) {
+        expected = "theName";
+        issue = {  
+         "key":"theName",
+        };
+        injector.require(['lib/issueNameExtractor'], function (theExtractor) {
+            extractor = theExtractor;
+            done();
+        });
+      });
+      it('should return the name', function (done) {
+        extractor(issue, function (err, actual) {
+          expect(actual).to.be(expected);
+          done();
+        });
       });
     });
 
@@ -153,10 +185,10 @@ describe('parse jira results', function () {
         });
       });
       it('should return the priority', function (done) {
-        var actualDate;
-        actualDate = issueCreatedDateExtractor(issue);
-        expect(actualDate).to.be(expectedCreatedDate);
-        done();
+        issueCreatedDateExtractor(issue, function (err, actualDate) {
+          expect(actualDate).to.be(expectedCreatedDate);
+          done();
+        });
       });
     });
 
