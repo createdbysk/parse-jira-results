@@ -7,58 +7,38 @@ requirejs(['commander',
           'linq',
           'path',
           'lib/issueStatusExtractor', 
-          'lib/issuePriorityExtractor'
+          'lib/issuePriorityExtractor',
+          'library/transformLoader'
           ], 
-    function (program, readFileAndIterate, linq, path, issueStatusExtractor, issuePriorityExtractor) {
+    function (program, readFileAndIterate, linq, path, issueStatusExtractor, issuePriorityExtractor, transformLoader) {
         'use strict';
         var formatDate,
             extractors,
             processIssue,
             processResults,
             displayResults;
-        extractors = function (value, collection) {
-            var withoutExtension,
-                module,
-                name;
-            value = value.split(',');
-            module = value[0];
-            name = value[1];
-            withoutExtension = path.join(path.dirname(module), path.basename(module, '.js'));
-            collection.modules.push(withoutExtension);
-            collection.names.push(name);
-            return collection;
-        };
 
-        program
+        transformLoader
+            .configureCommander(program)
+            .transform('-e --extractor', 'requirejs modules that extract values')
             .version('0.0.1')
-            .option('-e --extractor [module,name]', 'requirejs modules that extract values', extractors, {modules:[], names:[]})
             .parse(process.argv);
 
-        requirejs(program.extractor.modules, function () {
-            var args;
-            args = arguments;
+        transformLoader.loadModules(program.extractor, function (err, transforms) {
             processIssue = 
                 function (issue) {
                     var resultsWithExtractedFields;
                     resultsWithExtractedFields = 
-                        linq.from(program.extractor.names)
-                            .zip(linq.from(args), 
-                                function (name, extractor) {
-                                    var retval;
-                                    extractor(issue, function (err, result) {
-                                        retval = {name: name, 
-                                                  result: (result instanceof linq) ? result.toArray() : result
-                                                };
+                        linq.from(transforms)
+                            .aggregate({}, 
+                                function (combination, transform) {
+                                    transform.transform(issue, function (err, result) {
+                                        combination[transform.name] = 
+                                            (result instanceof linq) ? result.toArray() : result;
                                     });
-                                    console.error('result', resultsWithExtractedFields);
-                                    return retval;
+                                    return combination;
                                 }
-                            )
-                            .aggregate({}, function (combination, value) {
-                                combination[value.name] = value.result;
-                                return combination;
-                            });
-                    console.error('result', resultsWithExtractedFields);
+                            );
                     return resultsWithExtractedFields;
                 };
             processResults = function (results) {
