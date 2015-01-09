@@ -55,8 +55,8 @@ describe('duration in status calculator', function () {
             expectedDurationInStatus;
         timesInStatuses = [{
             status: status1,
-            from: date1,
-            to: null
+            start: date1,
+            end: null
         }];
         expectedDurationInStatus = [
             {
@@ -73,8 +73,8 @@ describe('duration in status calculator', function () {
         timesInStatuses = [
             {
                 status: status1,
-                from: date1,
-                to: date2
+                start: date1,
+                end: date2
             }
         ];
         expectedDurationInStatus = [
@@ -92,13 +92,13 @@ describe('duration in status calculator', function () {
         timesInStatuses = [
             {
                 status: status1,
-                from: date1,
-                to: date2
+                start: date1,
+                end: date2
             },
             {
                 status: status1,
-                from: date2,
-                to: date3
+                start: date2,
+                end: date3
             },
         ];
         expectedDurationInStatus = [
@@ -115,18 +115,18 @@ describe('duration in status calculator', function () {
         timesInStatuses = [
             {
                 status: status1,
-                from: date1,
-                to: date2
+                start: date1,
+                end: date2
             },
             {
                 status: status2,
-                from: date1,
-                to: date2
+                start: date1,
+                end: date2
             },
             {
                 status: status1,
-                from: date2,
-                to: date3
+                start: date2,
+                end: date3
             },
         ];
         expectedDurationInStatus = [
@@ -147,18 +147,18 @@ describe('duration in status calculator', function () {
         timesInStatuses = [
             {
                 status: status1,
-                from: date1,
-                to: date2
+                start: date1,
+                end: date2
             },
             {
                 status: status2,
-                from: date1,
-                to: date2
+                start: date1,
+                end: date2
             },
             {
                 status: status1,
-                from: date2,
-                to: null
+                start: date2,
+                end: null
             },
         ];
         expectedDurationInStatus = [

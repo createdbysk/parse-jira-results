@@ -15,8 +15,8 @@ define(['linq', 'moment'], function (linq, moment) {
         var startMoment,
             endMoment,
             leadTime;
-        startMoment = moment(startDate).startOf('day');
-        endMoment = moment(endDate).endOf('day');
+        startMoment = moment(startDate);
+        endMoment = moment(endDate);
         // See http://momentjs.com/docs/
         // Second parameter specifies get the number of days.
         // Third parameter specifies return fractional days.

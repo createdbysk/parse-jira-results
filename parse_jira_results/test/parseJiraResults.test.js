@@ -264,7 +264,7 @@ describe('parse jira results', function () {
                 startDate,
                 endDate,
                 leadTime;
-            expectedLeadTime = 18;
+            expectedLeadTime = 17;
             startDate = "2014-12-01T15:58:25.000+0000";
             endDate = "2014-12-18T12:12:21.000+0000";
             leadTime = leadTimeCalculator(startDate, endDate);
