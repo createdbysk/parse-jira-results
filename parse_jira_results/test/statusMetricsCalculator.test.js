@@ -7,7 +7,7 @@ expect = require('expect.js');
 sinon = require('sinon');
 linq = require('linq');
 
-describe('duration in status calculator', function () {
+describe('status metrics calculator', function () {
     'use strict';
     var injector,
         leadTimeCalculator,
@@ -19,13 +19,13 @@ describe('duration in status calculator', function () {
         duration12,
         duration23,
         terminalStatus,
-        durationInStatusCalculator,
+        statusMetricsCalculator,
         verify;
 
-    verify = function (timesInStatuses, expectedDurationInStatuses, done) {
-        var durationInStatus;
-        durationInStatus = durationInStatusCalculator(timesInStatuses).toArray();
-        expect(durationInStatus).to.eql(expectedDurationInStatuses);
+    verify = function (timesInStatuses, expectedStatusMetricses, done) {
+        var statusMetrics;
+        statusMetrics = statusMetricsCalculator(timesInStatuses).toArray();
+        expect(statusMetrics).to.eql(expectedStatusMetricses);
         done();
     }
         
@@ -45,31 +45,32 @@ describe('duration in status calculator', function () {
         injector
             .mock('linq', linq)
             .mock('lib/leadTimeCalculator', leadTimeCalculator)
-            .require(['lib/durationInStatusCalculator'], function (theDurationInStatusCalculator) {
-            durationInStatusCalculator = theDurationInStatusCalculator;
+            .require(['lib/statusMetricsCalculator'], function (theStatusMetricsCalculator) {
+            statusMetricsCalculator = theStatusMetricsCalculator;
             done();
         });
     });
-    it('should set leadtime to null if the "to date" is null', function (done) {
+    it('should set leadtime to null and number of entries to 1 if the "to date" is null', function (done) {
         var timesInStatuses,
-            expectedDurationInStatus;
+            expectedStatusMetrics;
         timesInStatuses = [{
             status: status1,
             start: date1,
             end: null
         }];
-        expectedDurationInStatus = [
+        expectedStatusMetrics = [
             {
                 status: status1,
+                numberOfEntries: 1,
                 duration: null
             }
         ];
-        verify(timesInStatuses, expectedDurationInStatus, done);
+        verify(timesInStatuses, expectedStatusMetrics, done);
     });
     it('should set leadtime to the difference of the from and to time for a status', function (done) {
         var timesInStatuses,
-            durationInStatus,
-            expectedDurationInStatus;
+            statusMetrics,
+            expectedStatusMetrics;
         timesInStatuses = [
             {
                 status: status1,
@@ -77,18 +78,19 @@ describe('duration in status calculator', function () {
                 end: date2
             }
         ];
-        expectedDurationInStatus = [
+        expectedStatusMetrics = [
             {
                 status: status1,
+                numberOfEntries: 1,
                 duration: duration12
             }
         ];
-        verify(timesInStatuses, expectedDurationInStatus, done);
+        verify(timesInStatuses, expectedStatusMetrics, done);
     });
-    it('should set leadtime to the sum of the durations for each status', function (done) {
+    it('should set leadtime to the sum of the durations and the number of entries for each status', function (done) {
         var timesInStatuses,
-            durationInStatus,
-            expectedDurationInStatus;
+            statusMetrics,
+            expectedStatusMetrics;
         timesInStatuses = [
             {
                 status: status1,
@@ -101,17 +103,18 @@ describe('duration in status calculator', function () {
                 end: date3
             },
         ];
-        expectedDurationInStatus = [
+        expectedStatusMetrics = [
             {
                 status: status1,
+                numberOfEntries: 2,
                 duration: duration12+duration23
             }
         ];
-        verify(timesInStatuses, expectedDurationInStatus, done);
+        verify(timesInStatuses, expectedStatusMetrics, done);
     });
     it('should set leadtime to the sum of the durations for each status even when the statuses are non-contiguous', function (done) {
         var timesInStatuses,
-            expectedDurationInStatus;
+            expectedStatusMetrics;
         timesInStatuses = [
             {
                 status: status1,
@@ -129,21 +132,23 @@ describe('duration in status calculator', function () {
                 end: date3
             },
         ];
-        expectedDurationInStatus = [
+        expectedStatusMetrics = [
             {
                 status: status1,
+                numberOfEntries: 2,
                 duration: duration12+duration23
             },
             {
                 status: status2,
+                numberOfEntries: 1,
                 duration: duration12
             }
         ];
-        verify(timesInStatuses, expectedDurationInStatus, done);
+        verify(timesInStatuses, expectedStatusMetrics, done);
     });
     it('should set leadtime to null if the "to date" of the last status is null', function (done) {
         var timesInStatuses,
-            expectedDurationInStatus;
+            expectedStatusMetrics;
         timesInStatuses = [
             {
                 status: status1,
@@ -161,16 +166,18 @@ describe('duration in status calculator', function () {
                 end: null
             },
         ];
-        expectedDurationInStatus = [
+        expectedStatusMetrics = [
             {
                 status: status1,
+                numberOfEntries: 2,
                 duration: null
             },
             {
                 status: status2,
+                numberOfEntries: 1,
                 duration: duration12
             }
         ];
-        verify(timesInStatuses, expectedDurationInStatus, done);
+        verify(timesInStatuses, expectedStatusMetrics, done);
     });
 });

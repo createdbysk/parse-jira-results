@@ -5,8 +5,8 @@ requirejs = require('library/configuredRequirejs');
 streamEnumerableCreator = require('library/streamEnumerableCreator');
 
 requirejs(['lib/timeInStatusCalculator', 
-          'lib/durationInStatusCalculator'], 
-    function (timeInStatusCalculator, durationInStatusCalculator) {
+          'lib/statusMetricsCalculator'], 
+    function (timeInStatusCalculator, statusMetricsCalculator) {
         'use strict';
         streamEnumerableCreator(process.stdin, function (err, lines) {
             lines.select(function (line) {
@@ -21,7 +21,7 @@ requirejs(['lib/timeInStatusCalculator',
             .select(function (issue) {
                 return {
                     name: issue.name,
-                    durationInStatuses:  durationInStatusCalculator(issue.timeInStatuses).toArray()
+                    statusMetrics:  statusMetricsCalculator(issue.timeInStatuses).toArray()
                 }
             })
             .forEach('console.log("value", $)');
