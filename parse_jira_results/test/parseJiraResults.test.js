@@ -205,8 +205,24 @@ describe('parse jira results', function () {
                    {  
                       "items":[  
                          {  
+                            "field":"status",
+                            "toString":"Open"
+                         }
+                        ]
+                    },
+                   {  
+                      "items":[  
+                         {  
                             "field":"Story Points",
                             "toString":"2"
+                         }
+                        ]
+                    },
+                   {  
+                      "items":[  
+                         {  
+                            "field":"status",
+                            "toString":"In Progress"
                          }
                         ]
                     },
@@ -217,8 +233,15 @@ describe('parse jira results', function () {
                             "toString":expectedStoryPoints
                          }
                         ]
-                    }
-                ]
+                    },
+                    {
+                      "items":[  
+                         {
+                            "field":"status",
+                            "toString":"Closed"
+                         }
+                        ]
+                    }]
             }
         };
         injector.require(['lib/issueStoryPointsExtractor'], function (theIssueStoryPointsExtractor) {
