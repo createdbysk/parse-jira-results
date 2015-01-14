@@ -184,9 +184,51 @@ describe('parse jira results', function () {
             done();
         });
       });
-      it('should return the priority', function (done) {
+      it('should return the created date', function (done) {
         issueCreatedDateExtractor(issue, function (err, actualDate) {
           expect(actualDate).to.be(expectedCreatedDate);
+          done();
+        });
+      });
+    });
+
+    describe('issue story points extractor', function () {
+      'use strict';
+      var issue,
+          expectedStoryPoints,
+          issueStoryPointsExtractor;
+      beforeEach(function (done) {
+        expectedStoryPoints = "theStoryPoints";
+        issue = {
+             "changelog":{  
+                "histories":[  
+                   {  
+                      "items":[  
+                         {  
+                            "field":"Story Points",
+                            "toString":"2"
+                         }
+                        ]
+                    },
+                    {
+                      "items":[  
+                         {
+                            "field":"Story Points",
+                            "toString":expectedStoryPoints
+                         }
+                        ]
+                    }
+                ]
+            }
+        };
+        injector.require(['lib/issueStoryPointsExtractor'], function (theIssueStoryPointsExtractor) {
+            issueStoryPointsExtractor = theIssueStoryPointsExtractor;
+            done();
+        });
+      });
+      it('should return the story points', function (done) {
+        issueStoryPointsExtractor(issue, function (err, actual) {
+          expect(actual).to.be(expectedStoryPoints);
           done();
         });
       });
