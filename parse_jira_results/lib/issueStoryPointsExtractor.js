@@ -9,7 +9,6 @@ define(['linq'], function (linq) {
                         return item.field === 'Story Points';
                     })
                     .select(function (item) {
-                        console.error("Story points", item.toString);
                         return item.toString;
                     });
                 return storyPoints;
