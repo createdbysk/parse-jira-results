@@ -13,16 +13,10 @@ requirejs(['lib/timeInStatusCalculator',
                 return JSON.parse(line);
             })
             .select(function (issue) {
-                return {
-                    name: issue.name,
-                    timeInStatuses:  timeInStatusCalculator(issue.statuses, 'Closed')
-                }
-            })
-            .select(function (issue) {
-                return {
-                    name: issue.name,
-                    statusMetrics:  statusMetricsCalculator(issue.timeInStatuses).toArray()
-                }
+                var timeInStatuses = timeInStatusCalculator(issue.statuses, 'Closed');
+                issue.statusMetrics = statusMetricsCalculator(timeInStatuses).toArray();
+                delete issue.statuses;
+                return issue;
             })
             .forEach('console.log("value", $)');
         }
