@@ -24,7 +24,7 @@ requirejs(['lib/timeInStatusCalculator',
     function (timeInStatusCalculator, statusMetricsCalculator, issueReportGenerator, linq, moment) {
         'use strict';
         streamEnumerableCreator(process.stdin, function (err, lines) {
-            console.log('Name, Created Date, ' + program.order.join(', '));
+            console.log('Name, Created Date, Story Points, ' + program.order.join(', '));
             lines.select(function (line) {
                 return JSON.parse(line);
             })
@@ -41,18 +41,28 @@ requirejs(['lib/timeInStatusCalculator',
             .forEach(function (issue) 
                 {
                     var statusData,
-                        createdDate;
+                        createdDate,
+                        initialString;
                     createdDate = moment(issue.createdDate).format('YYYY-MM-DD');
+                    initialString = [issue.name, createdDate, issue.storyPoints].join(',');
                     statusData = 
                         linq.from(program.order)
-                            .aggregate(issue.name + ', ' + createdDate,
+                            .aggregate(initialString,
                                        function (line, status) {
-                                            return line += ', ' + issue.report[status];
+                                            status = issue.report[status];
+                                            if (status === null) {
+                                                status = "-1"
+                                            }
+                                            else if (status === undefined) {
+                                                status = '';
+                                            }
+                                            return line += ', ' + status;
                                         }
                             );
                     console.log(statusData);
                 }
             );
+            console.log('Lead Time Formula, =IF(COUNTIF(D2:I2,"= active")>0,"",SUM(D2:I2))');
         }
     );
 });
