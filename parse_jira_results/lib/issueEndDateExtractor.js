@@ -20,13 +20,13 @@ define(['linq', 'lib/statusFilter', 'lib/issueStatusExtractor'], function (linq,
                         return status.to === "Closed";
                     },
                     function (error, possibleExitPoints) {
-                        console.error("EXIT", JSON.stringify(possibleExitPoints.toArray(), undefined, 4));
+                        //console.error("EXIT", JSON.stringify(possibleExitPoints.toArray(), undefined, 4));
                         endDate = linq.from(possibleExitPoints)
                                         .select(function (status) {
                                             return status.date;
                                         })
                                         .lastOrDefault();
-                        console.error("END DATE", endDate);
+                        //console.error("END DATE", endDate);
                     }
                 );
                 callback(null, endDate);

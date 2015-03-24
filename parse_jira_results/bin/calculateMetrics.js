@@ -16,15 +16,16 @@ program
     .option('-o --order <comma separated statuses>', 'Comma separated list of statuses', convertToArrayOfStatuses)
     .parse(process.argv);
 
-requirejs(['lib/timeInStatusCalculator', 
+requirejs(['linq',
+          'moment',
+          'lib/timeInStatusCalculator', 
           'lib/statusMetricsCalculator',
-          'lib/issueReportGenerator',
-          'linq',
-          'moment'], 
-    function (timeInStatusCalculator, statusMetricsCalculator, issueReportGenerator, linq, moment) {
+          'lib/issueReportGenerator'
+          ], 
+    function (linq, moment, timeInStatusCalculator, statusMetricsCalculator, issueReportGenerator) {
         'use strict';
         streamEnumerableCreator(process.stdin, function (err, lines) {
-            console.log('Name, Created Date, Story Points, ' + program.order.join(', '));
+            console.log('Name, Story Points, Created Date, Start Date, End Date, Priority,' + program.order.join(', '));
             lines.select(function (line) {
                 return JSON.parse(line);
             })
@@ -42,9 +43,16 @@ requirejs(['lib/timeInStatusCalculator',
                 {
                     var statusData,
                         createdDate,
+                        startDate,
+                        endDate,
+                        formatString,
                         initialString;
-                    createdDate = moment(issue.createdDate).format('YYYY-MM-DD');
-                    initialString = [issue.name, createdDate, issue.storyPoints].join(',');
+                    formatString = 'YYYY-MM-DD HH:mm:ss';
+                    createdDate = moment(issue.createdDate).format(formatString);
+                    startDate = issue.startDate ? moment(issue.startDate).format(formatString) : null;
+                    endDate = issue.endDate ? moment(issue.endDate).format(formatString) : null;
+
+                    initialString = [issue.name, issue.storyPoints, createdDate, startDate, endDate, issue.priority].join(',');
                     statusData = 
                         linq.from(program.order)
                             .aggregate(initialString,
@@ -54,7 +62,7 @@ requirejs(['lib/timeInStatusCalculator',
                                                 status = "-1"
                                             }
                                             else if (status === undefined) {
-                                                status = '';
+                                                status = '-2';
                                             }
                                             return line += ', ' + status;
                                         }
@@ -62,7 +70,6 @@ requirejs(['lib/timeInStatusCalculator',
                     console.log(statusData);
                 }
             );
-            console.log('Lead Time Formula, =IF(COUNTIF(D2:I2,"= active")>0,"",SUM(D2:I2))');
         }
     );
 });

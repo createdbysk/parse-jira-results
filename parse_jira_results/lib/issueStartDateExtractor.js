@@ -22,14 +22,14 @@ define(['linq', 'lib/statusFilter', 'lib/issueStatusExtractor'], function (linq,
                             status.to !== "Closed";
                     },
                     function (error, possibleCommitmentPoints) {
-                        console.error("COMMITMENT %s", JSON.stringify(possibleCommitmentPoints.toArray(), undefined, 4));
+                        //console.error("COMMITMENT %s", JSON.stringify(possibleCommitmentPoints.toArray(), undefined, 4));
                         startDate = linq.from(possibleCommitmentPoints)
                                         .select(function (status) {
                                             return status.date;
                                         })
                                         .firstOrDefault();
-                        console.error("COMMITMENT", JSON.stringify(possibleCommitmentPoints.toArray(), undefined, 4));
-                        console.error("START DATE", startDate);
+                        //console.error("COMMITMENT", JSON.stringify(possibleCommitmentPoints.toArray(), undefined, 4));
+                        //console.error("START DATE", startDate);
                     }
                 );
                 callback(null, startDate);
