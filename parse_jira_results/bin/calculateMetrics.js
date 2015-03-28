@@ -18,14 +18,14 @@ program
 
 requirejs(['linq',
           'moment',
-          'lib/timeInStatusCalculator', 
+          'lib/timeInStatusCalculator',
           'lib/statusMetricsCalculator',
           'lib/issueReportGenerator'
-          ], 
+          ],
     function (linq, moment, timeInStatusCalculator, statusMetricsCalculator, issueReportGenerator) {
         'use strict';
         streamEnumerableCreator(process.stdin, function (err, lines) {
-            console.log('Name, Story Points, Created Date, Start Date, End Date, Priority,' + program.order.join(', '));
+            console.log('Name, Type, Story Points, Created Date, Start Date, End Date, Priority,' + program.order.join(', '));
             lines.select(function (line) {
                 return JSON.parse(line);
             })
@@ -39,7 +39,7 @@ requirejs(['linq',
                 delete issue.statuses;
                 return issue;
             })
-            .forEach(function (issue) 
+            .forEach(function (issue)
                 {
                     var statusData,
                         createdDate,
@@ -52,8 +52,8 @@ requirejs(['linq',
                     startDate = issue.startDate ? moment(issue.startDate).format(formatString) : null;
                     endDate = issue.endDate ? moment(issue.endDate).format(formatString) : null;
 
-                    initialString = [issue.name, issue.storyPoints, createdDate, startDate, endDate, issue.priority].join(',');
-                    statusData = 
+                    initialString = [issue.name, issue.type, issue.storyPoints, createdDate, startDate, endDate, issue.priority].join(',');
+                    statusData =
                         linq.from(program.order)
                             .aggregate(initialString,
                                        function (line, status) {
