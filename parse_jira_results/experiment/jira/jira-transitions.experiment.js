@@ -18,7 +18,8 @@ program
 
 JiraApi = require('jira').JiraApi;
 console.error(program.user, program.password);
-jira = new JiraApi('https', program.args[0], null, program.user, program.password, '2.0', false, false);
+console.error(program.args[0]);
+jira = new JiraApi('https', program.args[0], 443, program.user, program.password, '2.0', true, false);
 
 jira.searchJira("project%3DSW&expand=changelog&maxResults=500", {fields: ['priority', 'created']}, function (results) {
     console.error('RESULTS: ', results);
