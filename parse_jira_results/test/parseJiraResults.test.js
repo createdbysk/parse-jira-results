@@ -12,7 +12,7 @@ sinon = require('sinon');
 describe('parse jira results', function () {
     var injector;
     beforeEach(function (done) {
-        injector = requireInjector.createInjector();   
+        injector = requireInjector.createInjector();
         done();
     });
 
@@ -29,12 +29,12 @@ describe('parse jira results', function () {
                  "fields": {
                     "created":createdDate
                  },
-                 "changelog":{  
-                    "histories":[  
-                       {  
+                 "changelog":{
+                    "histories":[
+                       {
                           "created":"2014-12-01T15:58:25.000+0000",
-                          "items":[  
-                             {  
+                          "items":[
+                             {
                                 "field":"status",
                                 "fieldtype":"jira",
                                 "from":"10002",
@@ -44,10 +44,10 @@ describe('parse jira results', function () {
                              }
                             ]
                         },
-                       {  
+                       {
                           "created":"2014-12-10T19:41:38.000+0000",
-                          "items":[  
-                             {  
+                          "items":[
+                             {
                                 "field":"Component",
                                 "fieldtype":"jira",
                                 "from":null,
@@ -57,10 +57,10 @@ describe('parse jira results', function () {
                              }
                           ]
                        },
-                       {  
+                       {
                           "created":"2014-12-18T12:12:21.000+0000",
-                          "items":[  
-                             {  
+                          "items":[
+                             {
                                 "field":"status",
                                 "fieldtype":"jira",
                                 "from":"10002",
@@ -119,10 +119,10 @@ describe('parse jira results', function () {
           issuePriorityExtractor;
       beforeEach(function (done) {
         expectedPriority = "thePrority";
-        issue = {  
+        issue = {
          "key":"issue-id",
-         "fields":{  
-            "priority":{  
+         "fields":{
+            "priority":{
                "self":"https://jira.dev.socialware.com/rest/api/2/priority/2",
                "iconUrl":"https://jira.dev.socialware.com/images/icons/priorities/critical.png",
                "name":expectedPriority,
@@ -143,6 +143,39 @@ describe('parse jira results', function () {
       });
     });
 
+    describe('issue type extractor', function () {
+      'use strict';
+      var issue,
+          expectedType,
+          issueTypeExtractor;
+      beforeEach(function (done) {
+        expectedType = "thePrority";
+        issue = {
+         "key":"issue-id",
+         "fields":{
+           "issuetype": {
+               "self": "https://jira.dev.socialware.com/rest/api/2/issuetype/1",
+               "id": "1",
+               "description": "A problem which impairs or prevents the functions of the product.",
+               "iconUrl": "https://jira.dev.socialware.com/images/icons/issuetypes/bug.png",
+               "name": expectedType,
+               "subtask": false
+           }
+          }
+        };
+        injector.require(['lib/issueTypeExtractor'], function (theIssueTypeExtractor) {
+            issueTypeExtractor = theIssueTypeExtractor;
+            done();
+        });
+      });
+      it('should return the issue type', function (done) {
+        issueTypeExtractor(issue, function (err, actualType) {
+          expect(actualType).to.be(expectedType);
+          done();
+        });
+      });
+    });
+
     describe('issue name extractor', function () {
       'use strict';
       var issue,
@@ -150,7 +183,7 @@ describe('parse jira results', function () {
           extractor;
       beforeEach(function (done) {
         expected = "theName";
-        issue = {  
+        issue = {
          "key":"theName",
         };
         injector.require(['lib/issueNameExtractor'], function (theExtractor) {
@@ -173,9 +206,9 @@ describe('parse jira results', function () {
           issueCreatedDateExtractor;
       beforeEach(function (done) {
         expectedCreatedDate = "theCreatedDate";
-        issue = {  
+        issue = {
          "key":"issue-id",
-         "fields":{  
+         "fields":{
             "created":expectedCreatedDate
           }
         };
@@ -184,9 +217,74 @@ describe('parse jira results', function () {
             done();
         });
       });
-      it('should return the priority', function (done) {
+      it('should return the created date', function (done) {
         issueCreatedDateExtractor(issue, function (err, actualDate) {
           expect(actualDate).to.be(expectedCreatedDate);
+          done();
+        });
+      });
+    });
+
+    describe('issue story points extractor', function () {
+      'use strict';
+      var issue,
+          expectedStoryPoints,
+          issueStoryPointsExtractor;
+      beforeEach(function (done) {
+        expectedStoryPoints = "theStoryPoints";
+        issue = {
+             "changelog":{
+                "histories":[
+                   {
+                      "items":[
+                         {
+                            "field":"status",
+                            "toString":"Open"
+                         }
+                        ]
+                    },
+                   {
+                      "items":[
+                         {
+                            "field":"Story Points",
+                            "toString":"2"
+                         }
+                        ]
+                    },
+                   {
+                      "items":[
+                         {
+                            "field":"status",
+                            "toString":"In Progress"
+                         }
+                        ]
+                    },
+                    {
+                      "items":[
+                         {
+                            "field":"Story Points",
+                            "toString":expectedStoryPoints
+                         }
+                        ]
+                    },
+                    {
+                      "items":[
+                         {
+                            "field":"status",
+                            "toString":"Closed"
+                         }
+                        ]
+                    }]
+            }
+        };
+        injector.require(['lib/issueStoryPointsExtractor'], function (theIssueStoryPointsExtractor) {
+            issueStoryPointsExtractor = theIssueStoryPointsExtractor;
+            done();
+        });
+      });
+      it('should return the story points', function (done) {
+        issueStoryPointsExtractor(issue, function (err, actual) {
+          expect(actual).to.be(expectedStoryPoints);
           done();
         });
       });
@@ -224,11 +322,11 @@ describe('parse jira results', function () {
                     to: "Closed"
                 }
             ];
-            
+
             injector.require(['lib/statusFilter'], function (theStatusFilter) {
                 statusFilter = theStatusFilter;
                 done();
-            });            
+            });
         });
         it('should filter the status given the predicate', function (done) {
             var expectedStatuses;
@@ -237,7 +335,7 @@ describe('parse jira results', function () {
                 from: "Open",
                 to: "In Design"
             }];
-            statusFilter(statuses, 
+            statusFilter(statuses,
                 function (status) {
                     return status.date === "date2";
                 },
@@ -264,11 +362,11 @@ describe('parse jira results', function () {
                 startDate,
                 endDate,
                 leadTime;
-            expectedLeadTime = 18;
+            expectedLeadTime = 17;
             startDate = "2014-12-01T15:58:25.000+0000";
             endDate = "2014-12-18T12:12:21.000+0000";
             leadTime = leadTimeCalculator(startDate, endDate);
-            expect(leadTime).to.be(expectedLeadTime);
+            expect(Math.ceil(leadTime)).to.be(expectedLeadTime);
             done();
         });
         it('should return null if startDate is null', function (done) {
@@ -300,17 +398,17 @@ describe('parse jira results', function () {
 
 describe('for later', function () {
     var resultsJSON;
-        resultsJSON = 
-        {  
-           "issues":[  
+        resultsJSON =
+        {
+           "issues":[
             {
                  "key":"issue-id",
-                 "changelog":{  
-                    "histories":[  
-                       {  
+                 "changelog":{
+                    "histories":[
+                       {
                           "created":"2014-12-01T15:58:25.000+0000",
-                          "items":[  
-                             {  
+                          "items":[
+                             {
                                 "field":"status",
                                 "fieldtype":"jira",
                                 "from":"10002",
@@ -318,7 +416,7 @@ describe('for later', function () {
                                 "to":"1",
                                 "toString":"Open"
                              },
-                             {  
+                             {
                                 "field":"assignee",
                                 "fieldtype":"jira",
                                 "from":null,
@@ -328,10 +426,10 @@ describe('for later', function () {
                              }
                           ]
                        },
-                       {  
+                       {
                           "created":"2014-12-10T19:41:38.000+0000",
-                          "items":[  
-                             {  
+                          "items":[
+                             {
                                 "field":"Component",
                                 "fieldtype":"jira",
                                 "from":null,
@@ -341,10 +439,10 @@ describe('for later', function () {
                              }
                           ]
                        },
-                       {  
+                       {
                           "created":"2014-12-10T19:41:42.000+0000",
-                          "items":[  
-                             {  
+                          "items":[
+                             {
                                 "field":"labels",
                                 "fieldtype":"jira",
                                 "from":null,
@@ -354,10 +452,10 @@ describe('for later', function () {
                              }
                           ]
                        },
-                       {  
+                       {
                           "created":"2014-12-12T14:42:26.000+0000",
-                          "items":[  
-                             {  
+                          "items":[
+                             {
                                 "field":"status",
                                 "fieldtype":"jira",
                                 "from":"1",
@@ -367,13 +465,13 @@ describe('for later', function () {
                              }
                           ]
                        },
-                       {  
+                       {
                           "id":"181954",
-                          "author":{  
+                          "author":{
                              "self":"https://jira.dev.socialware.com/rest/api/2/user?username=vparsons",
                              "name":"vparsons",
                              "emailAddress":"vparsons@socialware.com",
-                             "avatarUrls":{  
+                             "avatarUrls":{
                                 "16x16":"https://jira.dev.socialware.com/secure/useravatar?size=xsmall&ownerId=vparsons&avatarId=11216",
                                 "24x24":"https://jira.dev.socialware.com/secure/useravatar?size=small&ownerId=vparsons&avatarId=11216",
                                 "32x32":"https://jira.dev.socialware.com/secure/useravatar?size=medium&ownerId=vparsons&avatarId=11216",
@@ -383,8 +481,8 @@ describe('for later', function () {
                              "active":true
                           },
                           "created":"2014-12-12T15:32:30.000+0000",
-                          "items":[  
-                             {  
+                          "items":[
+                             {
                                 "field":"status",
                                 "fieldtype":"jira",
                                 "from":"10002",
@@ -392,7 +490,7 @@ describe('for later', function () {
                                 "to":"1",
                                 "toString":"Open"
                              },
-                             {  
+                             {
                                 "field":"Fix Version",
                                 "fieldtype":"jira",
                                 "from":null,
@@ -402,10 +500,10 @@ describe('for later', function () {
                              }
                           ]
                        },
-                       {  
+                       {
                           "created":"2014-12-12T19:43:36.000+0000",
-                          "items":[  
-                             {  
+                          "items":[
+                             {
                                 "field":"status",
                                 "fieldtype":"jira",
                                 "from":"1",
@@ -415,13 +513,13 @@ describe('for later', function () {
                              }
                           ]
                        },
-                       {  
+                       {
                           "id":"182015",
-                          "author":{  
+                          "author":{
                              "self":"https://jira.dev.socialware.com/rest/api/2/user?username=skumar",
                              "name":"skumar",
                              "emailAddress":"skumar@socialware.com",
-                             "avatarUrls":{  
+                             "avatarUrls":{
                                 "16x16":"https://jira.dev.socialware.com/secure/useravatar?size=xsmall&avatarId=10119",
                                 "24x24":"https://jira.dev.socialware.com/secure/useravatar?size=small&avatarId=10119",
                                 "32x32":"https://jira.dev.socialware.com/secure/useravatar?size=medium&avatarId=10119",
@@ -431,8 +529,8 @@ describe('for later', function () {
                              "active":true
                           },
                           "created":"2014-12-12T19:43:51.000+0000",
-                          "items":[  
-                             {  
+                          "items":[
+                             {
                                 "field":"status",
                                 "fieldtype":"jira",
                                 "from":"3",
@@ -442,11 +540,11 @@ describe('for later', function () {
                              }
                           ]
                        },
-                       {  
+                       {
                           "id":"182048",
                           "created":"2014-12-13T02:44:04.000+0000",
-                          "items":[  
-                             {  
+                          "items":[
+                             {
                                 "field":"status",
                                 "fieldtype":"jira",
                                 "from":"10020",
@@ -456,10 +554,10 @@ describe('for later', function () {
                              }
                           ]
                        },
-                       {  
+                       {
                           "created":"2014-12-13T02:50:03.000+0000",
-                          "items":[  
-                             {  
+                          "items":[
+                             {
                                 "field":"status",
                                 "fieldtype":"jira",
                                 "from":"10003",
@@ -469,10 +567,10 @@ describe('for later', function () {
                              }
                           ]
                        },
-                       {  
+                       {
                           "created":"2014-12-15T18:23:32.000+0000",
-                          "items":[  
-                             {  
+                          "items":[
+                             {
                                 "field":"status",
                                 "fieldtype":"jira",
                                 "from":"10005",
@@ -482,10 +580,10 @@ describe('for later', function () {
                              }
                           ]
                        },
-                       {  
+                       {
                           "created":"2014-12-16T16:00:39.000+0000",
-                          "items":[  
-                             {  
+                          "items":[
+                             {
                                 "field":"status",
                                 "fieldtype":"jira",
                                 "from":"3",
@@ -495,10 +593,10 @@ describe('for later', function () {
                              }
                           ]
                        },
-                       {  
+                       {
                           "created":"2014-12-18T08:49:20.000+0000",
-                          "items":[  
-                             {  
+                          "items":[
+                             {
                                 "field":"status",
                                 "fieldtype":"jira",
                                 "from":"10005",
@@ -508,10 +606,10 @@ describe('for later', function () {
                              },
                           ]
                        },
-                       {  
+                       {
                           "created":"2014-12-18T12:12:21.000+0000",
-                          "items":[  
-                             {  
+                          "items":[
+                             {
                                 "field":"status",
                                 "fieldtype":"jira",
                                 "from":"10002",
