@@ -1,0 +1,15 @@
+{
+  "name": "JiraRest",
+  "version": "1.0.0",
+  "description": "Call Jira through a javascript",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "skumar",
+  "license": "ISC",
+  "dependencies": {
+    "request": "^2.55.0",
+    "request-progress": "^0.3.1"
+  }
+}
