@@ -13,6 +13,7 @@ linq.from(obj)
 
 linq.from(obj)
     .aggregate({}, function (combined, keyValuePair) {
+        combined[keyValuePair.key] = keyValuePair.value;
         console.log(combined, keyValuePair);
         return combined;
     });
