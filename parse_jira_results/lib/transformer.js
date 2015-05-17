@@ -6,7 +6,7 @@ define(['linq'], function (linq) {
      *  input       - The input that each transform operates on
      *  transforms  - The object that contains key value pairs as follows
      *                {
-     *                      transformName: transformFunction(input, callback(err, transformedResult));
+     *                      transformName: transformFunction(input, callback(transformedResult));
      *                }
      */
     transformer = function (input, transforms) {
@@ -16,22 +16,28 @@ define(['linq'], function (linq) {
         // linq.from does not work if the value in the object is a function.
         // Therefore, transform the object into an array.
         transformsArray = [];
+        // Iterate over all the properties of the object
         for(transformName in transforms) {
             if (transforms.hasOwnProperty(transformName)) {
+                // add the pair to the array.
                 transformsArray.push({
                     name: transformName,
                     fn: transforms[transformName]
                 });
             }
         }
+        // Define the function to transform the input to generate the result.
         applyTransforms =
             function (input) {
                 var results;
+                // Iterate over the transforms array, apply each transform to the input,
+                // and store the result paired with the transform name in combination
+                // object that represents the result.
                 results =
                     linq.from(transformsArray)
                         .aggregate({},
                             function (combination, transform) {
-                                transform.fn(input, function (err, result) {
+                                transform.fn(input, function (result) {
                                     combination[transform.name] =
                                         (result instanceof linq) ? result.toArray() : result;
                                 });

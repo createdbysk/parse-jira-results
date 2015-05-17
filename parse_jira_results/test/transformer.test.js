@@ -37,11 +37,11 @@ describe('issue report generator', function () {
             transform1 = sinon.stub();
             output1 = 'output1';
             transform1.withArgs(input, sinon.match.typeOf('function'))
-                      .callsArgWith(1, null, output1);
+                      .callsArgWith(1, output1);
             transform2 = sinon.stub();
             output2 = 'output2';
             transform2.withArgs(input, sinon.match.typeOf('function'))
-                      .callsArgWith(1, null, output2);
+                      .callsArgWith(1, output2);
             transforms = {
                 transform1: transform1,
                 transform2: transform2
