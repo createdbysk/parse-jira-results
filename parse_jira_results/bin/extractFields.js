@@ -6,11 +6,21 @@ requirejs(['commander',
           'bin/readFileAndIterate',
           'linq',
           'path',
-          'lib/issueStatusExtractor', 
+          'lib/issueStatusExtractor',
           'lib/issuePriorityExtractor',
-          'library/transformLoader'
-          ], 
-    function (program, readFileAndIterate, linq, path, issueStatusExtractor, issuePriorityExtractor, transformLoader) {
+          'library/transformLoader',
+          'library/transformer'
+          ],
+    function (
+        program,
+        readFileAndIterate,
+        linq,
+        path,
+        issueStatusExtractor,
+        issuePriorityExtractor,
+        transformLoader,
+        transformer)
+    {
         'use strict';
         var formatDate,
             extractors,
@@ -25,25 +35,17 @@ requirejs(['commander',
             .parse(process.argv);
 
         transformLoader.loadModules(program.extractor, function (err, transforms) {
-            processIssue = 
+            processIssue =
                 function (issue) {
                     var resultsWithExtractedFields;
-                    resultsWithExtractedFields = 
-                        linq.from(transforms)
-                            .aggregate({}, 
-                                function (combination, transform) {
-                                    transform.transform(issue, function (err, result) {
-                                        combination[transform.name] = 
-                                            (result instanceof linq) ? result.toArray() : result;
-                                    });
-                                    return combination;
-                                }
-                            );
+                    transformer(issue, transforms, function (err, extractedFields) {
+                        resultsWithExtractedFields = extractedFields;
+                    });
                     return resultsWithExtractedFields;
                 };
             processResults = function (results) {
                 var issuesWithExtractFields;
-                issuesWithExtractFields = 
+                issuesWithExtractFields =
                     linq.from(results.issues)
                         .select(processIssue);
                 return issuesWithExtractFields;
@@ -58,4 +60,3 @@ requirejs(['commander',
         });
     }
 );
-
