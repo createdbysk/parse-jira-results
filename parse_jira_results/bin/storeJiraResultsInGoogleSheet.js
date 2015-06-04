@@ -28,13 +28,11 @@ requirejs(['commander',
 
         program
             .version('0.0.1')
-            .usage('configuration_file_name')
+            .usage('configuration_file_name search_query')
             .parse(process.argv);
-
         requirejs([program.args[0]], function (configuration) {
             jiraRest = JiraRest(configuration.jiraConfiguration);
             jiraRest.search(program.args[1], function (err, result) {
-                console.log("RESULT", result);
                 transformLoader.loadModules(configuration.moduleConfiguration, function (err, transforms) {
                     var fields;
                     processIssue =
