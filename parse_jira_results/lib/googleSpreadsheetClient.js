@@ -1,8 +1,27 @@
 /**
  * Creates the google spreadsheet client.
  */
-define(function () {
-    var googleSpreadsheetClient;
-    googleSpreadsheetClient = {};
-    return googleSpreadsheetClient;
-});
+define(['googleapis',
+        'google-spreadsheet'],
+    function (googleapis, GoogleSpreadsheet) {
+        var googleSpreadsheetClient,
+            createJwtClient;
+
+        createJwtClient = function (configuration, callback) {
+            var jwtClient;
+            jwtClient = new googleapis.auth.JWT(
+                configuration.clientEmail,
+                configuration.clientPemFilePath,
+                null,
+                // scope from https://developers.google.com/google-apps/spreadsheets/#authorizing_requests_with_oauth_20
+                'https://spreadsheets.google.com/feeds'
+            );
+            callback(null, jwtClient);
+        };
+
+        googleSpreadsheetClient = {
+            createJwtClient : createJwtClient
+        };
+        return googleSpreadsheetClient;
+    }
+);
