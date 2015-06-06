@@ -38,23 +38,22 @@ describe('google spreadsheet client factory', function () {
         }
     );
 
-    describe('createJwtClient', function () {
-        var jwtConfiguration,
+    describe('createClient', function () {
+        var configuration,
             clientEmail,
             clientPemFilePath;
         beforeEach(function (done) {
             clientEmail = 'abc@email.com';
             clientPemFilePath = 'a.pem';
-            jwtConfiguration = {
+            configuration = {
                 clientEmail: clientEmail,
                 clientPemFilePath: clientPemFilePath
             }
             done();
         });
-        it('should create a Jwt Client given configuration parameters', function (done) {
-            var jwtClient;
-            jwtClient = googleSpreadsheetClientFactory.createJwtClient(jwtConfiguration,
-                function (err, jwtClient) {
+        it('should create a Client given configuration parameters', function (done) {
+            googleSpreadsheetClientFactory.createClient(configuration,
+                function (err, client) {
                     sinon.assert.calledWithNew(googleapis.auth.JWT);
                     sinon.assert.calledWith(
                         googleapis.auth.JWT,
@@ -65,10 +64,39 @@ describe('google spreadsheet client factory', function () {
                         'https://spreadsheets.google.com/feeds'
                     );
                     expect(err).to.not.be.ok();
-                    expect(jwtClient).to.be.ok();
+                    expect(client).to.be.ok();
                     done();
                 }
             );
+        });
+        describe('JWT Client', function () {
+            var client;
+            beforeEach(function (done) {
+                googleSpreadsheetClientFactory.createClient(configuration,
+                    function (err, theClient) {
+                        client = theClient;
+                        done();
+                    }
+                );
+            });
+            // it('should create a spreadsheet with the given key', function (done) {
+            //     client.createClient(configuration,
+            //         function (err, client) {
+            //             sinon.assert.calledWithNew(googleapis.auth.JWT);
+            //             sinon.assert.calledWith(
+            //                 googleapis.auth.JWT,
+            //                 clientEmail,
+            //                 clientPemFilePath,
+            //                 null,
+            //                 // scope from https://developers.google.com/google-apps/spreadsheets/#authorizing_requests_with_oauth_20
+            //                 'https://spreadsheets.google.com/feeds'
+            //             );
+            //             expect(err).to.not.be.ok();
+            //             expect(client).to.be.ok();
+            //             done();
+            //         }
+            //     );
+            // });
         });
     });
 });

@@ -5,9 +5,9 @@ define(['googleapis',
         'google-spreadsheet'],
     function (googleapis, GoogleSpreadsheet) {
         var googleSpreadsheetClient,
-            createJwtClient;
+            createClient;
 
-        createJwtClient = function (configuration, callback) {
+        createClient = function (configuration, callback) {
             var jwtClient;
             jwtClient = new googleapis.auth.JWT(
                 configuration.clientEmail,
@@ -20,7 +20,7 @@ define(['googleapis',
         };
 
         googleSpreadsheetClient = {
-            createJwtClient : createJwtClient
+            createClient : createClient
         };
         return googleSpreadsheetClient;
     }
