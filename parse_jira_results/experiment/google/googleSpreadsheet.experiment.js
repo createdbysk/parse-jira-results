@@ -20,6 +20,7 @@ jwtClient = new  googleapis.auth.JWT(
     'https://spreadsheets.google.com/feeds'
 );
 
+console.log("JWTclient", jwtClient);
 jwtClient.authorize(function (err, tokens) {
     var auth;
     if (err) {

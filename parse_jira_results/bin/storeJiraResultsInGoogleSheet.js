@@ -8,7 +8,8 @@ requirejs(['commander',
           'path',
           'library/transformLoader',
           'library/transformer',
-          'library/jiraRest'
+          'library/jiraRest',
+          'lib/googleSpreadsheetClient'
           ],
     function (
         program,
@@ -17,22 +18,31 @@ requirejs(['commander',
         path,
         transformLoader,
         transformer,
-        JiraRest)
+        JiraRest,
+        googleSpreadsheetClientFactory)
     {
         'use strict';
         var extractors,
             processIssue,
             processResults,
             displayResults,
+            configurationFileName,
+            searchQuery,
+            spreadsheetKey,
+            worksheetIndex,
             jiraRest;
 
         program
             .version('0.0.1')
-            .usage('configuration_file_name search_query')
+            .usage('configuration_file_name search_query spreadsheet_key worksheet_index')
             .parse(process.argv);
-        requirejs([program.args[0]], function (configuration) {
+        configurationFileName = program.args[0];
+        searchQuery = program.args[1];
+        spreadsheetKey = program.args[2];
+        worksheetIndex = parseInt(program.args[3]);
+        requirejs([configurationFileName], function (configuration) {
             jiraRest = JiraRest(configuration.jiraConfiguration);
-            jiraRest.search(program.args[1], function (err, result) {
+            jiraRest.search(searchQuery, function (err, result) {
                 transformLoader.loadModules(configuration.moduleConfiguration, function (err, transforms) {
                     var fields;
                     processIssue =
@@ -51,10 +61,31 @@ requirejs(['commander',
                         return issuesWithExtractFields;
                     };
                     displayResults = function (err, allIssuesWithExtractFields) {
-                        linq.from(allIssuesWithExtractFields)
-                            .forEach(function (issueWithExtractFields) {
-                                console.log(JSON.stringify(issueWithExtractFields));
-                            });
+                        googleSpreadsheetClientFactory.createClient(
+                            configuration.googleConfiguration.clientConfiguration,
+                            function (err, client) {
+                                var spreadsheet;
+                                if (err) {
+                                    console.log("ERROR createClient", err);
+                                }
+                                else {
+                                    client.getSpreadsheet(spreadsheetKey,
+                                        function (err, spreadsheet) {
+                                            linq.from(allIssuesWithExtractFields)
+                                                .forEach(function (issueWithExtractFields) {
+                                                    spreadsheet.addRow(worksheetIndex, issueWithExtractFields,
+                                                        function (err) {
+                                                            if (err) {
+                                                                console.log("ERROR addRow", issueWithExtractFields, err);
+                                                            }
+                                                        }
+                                                    );
+                                                });
+                                        }
+                                    );
+                                }
+                             }
+                        );
                     };
 
                     fields = processResults(result);

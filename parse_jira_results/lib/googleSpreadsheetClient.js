@@ -33,6 +33,7 @@ define(['googleapis',
             jwtClient.authorize(function (err, tokens) {
                 var auth;
                 if (err) {
+                    console.log("AUTHORIZE ERR", err);
                     callback(err);
                 }
                 else {
