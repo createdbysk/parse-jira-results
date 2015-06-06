@@ -27,6 +27,13 @@ For example,
 bin/extractFields.sh <raw json filename> | node bin/calculateMetrics.js -o "Triage,Open,In Design,In Progress,In Review,Ready for Testing" duration
 ```
 
+## Store results in google spreadsheet
+UNDER CONSTRUCTION
+
+Points to highlight
+* Provide an empty sheet that has a header row that matches the extracted fields.
+* Remember to empty the worksheet before every call to this utility.
+
 # Library use
 * Create an experiment under the experiment directory to learn how a library works.
 
