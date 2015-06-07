@@ -5,6 +5,7 @@ requirejs = require('library/configuredRequirejs');
 requirejs(['commander',
           'bin/readFileAndIterate',
           'linq',
+          'async',
           'path',
           'library/transformLoader',
           'library/transformer',
@@ -15,6 +16,7 @@ requirejs(['commander',
         program,
         readFileAndIterate,
         linq,
+        async,
         path,
         transformLoader,
         transformer,
@@ -71,16 +73,18 @@ requirejs(['commander',
                                 else {
                                     client.getSpreadsheet(spreadsheetKey,
                                         function (err, spreadsheet) {
-                                            linq.from(allIssuesWithExtractFields)
-                                                .forEach(function (issueWithExtractFields) {
-                                                    spreadsheet.addRow(worksheetIndex, issueWithExtractFields,
-                                                        function (err) {
-                                                            if (err) {
-                                                                console.log("ERROR addRow", issueWithExtractFields, err);
-                                                            }
-                                                        }
-                                                    );
-                                                });
+                                            async.eachLimit(allIssuesWithExtractFields.toArray(),
+                                                            configuration.googleConfiguration.numberOfRowsToAddInParallel,
+                                                function (issueWithExtractFields, continuation) {
+                                                    spreadsheet.addRow(worksheetIndex, issueWithExtractFields, continuation);
+                                                },
+                                                function (err) {
+                                                    console.log("DONE");
+                                                    if (err) {
+                                                        console.log("ERROR addRow", err);
+                                                    }
+                                                }
+                                            );
                                         }
                                     );
                                 }
