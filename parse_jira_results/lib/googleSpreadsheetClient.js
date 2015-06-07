@@ -20,8 +20,6 @@ define(['googleapis',
                 'https://spreadsheets.google.com/feeds'
             );
 
-            console.log("JWT", jwtClient);
-
             makeGetSpreadsheet = function (auth) {
                 return function (spreadsheetName, callback) {
                     var spreadsheet;
