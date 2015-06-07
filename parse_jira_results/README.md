@@ -34,6 +34,44 @@ Points to highlight
 * Provide an empty sheet that has a header row that matches the extracted fields.
 * Remember to empty the worksheet before every call to this utility.
 
+### Example configuration file
+```
+define({
+    // names and modules form a name value pair.
+    // Each element in the names array should have a corresponding
+    // module in the modules array.
+    moduleConfiguration: {
+        names: ['name', 'type', 'priority', 'startDate', 'endDate'],
+        modules: [
+            'lib/issueNameExtractor.js',
+            'lib/issueTypeExtractor.js',
+            'lib/issuePriorityExtractor.js',
+            'lib/issueStartDateExtractor.js',
+            'lib/issueEndDateExtractor.js'
+        ]
+    },
+    jiraConfiguration: {
+        baseUrl: "<JIRA url>",
+        username: '<username>',
+        password: '<password>',
+        strictSSL: <true or false>
+    },
+    googleConfiguration: {
+        clientConfiguration: {
+            clientEmail: "297654144845-3mkk4rmp9sbpr0e7gvac3gka7u3484ct@developer.gserviceaccount.com",
+            clientPemFilePath: "<pem filename. The file has to be stored in the
+                                server home directory."
+        },
+        numberOfRowsToAddInParallel: <The number of rows that the process will upload
+                                      to the spreadsheet at a time, which depends on
+                                      the internet bandwidth. Start with 20.
+                                      You can increase this number until you see the following error.
+                                      ERROR addRow { [Error: connect ETIMEDOUT] code: 'ETIMEDOUT', errno: 'ETIMEDOUT',
+                                      syscall: 'connect' }
+    }
+});
+```
+
 # Library use
 * Create an experiment under the experiment directory to learn how a library works.
 
@@ -51,4 +89,6 @@ Points to highlight
 // .p12 file downloaded from the Google Developers Console
 // openssl pkcs12 -in key.p12 -nocerts -passin pass:notasecret -nodes -out key.pem
 // put the .pem file in the same directory as this script.
+//
+
 DO NOT CHECK IN JIRA RESULTS.
