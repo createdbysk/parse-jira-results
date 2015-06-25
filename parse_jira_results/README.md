@@ -30,6 +30,28 @@ bin/extractFields.sh <raw json filename> | node bin/calculateMetrics.js -o "Tria
 ## Store results in google spreadsheet
 UNDER CONSTRUCTION
 
+### Setup a new server instance
+* For the Administrator
+** Generate a new P12 Key
+*** Login to console.developers.google.com
+*** Navigate to the project with id euphoric-coral-95415
+*** Navigate to APIs & auth >> Credentials
+*** On that screen, click on the "Generate new P12 key" button.
+*** This will download a new .p12 file.
+*** Deliver this .p12 file securely to the client machine.
+* On the Client machine
+** Run the following command to generate the <key>.pem file given a <key>.p12 file.
+```
+openssl pkcs12 -in <key>.p12 -nocerts -passin pass:notasecret -nodes -out <key>.pem
+```
+** Store the <key>.pem file in the server home directory.
+** Add the following object as one of the keys in the googleConfiguration in the configuration file
+clientConfiguration: {
+    clientEmail: "297654144845-3mkk4rmp9sbpr0e7gvac3gka7u3484ct@developer.gserviceaccount.com",
+    clientPemFilePath: "<pem filename. The file has to be stored in the
+                        server home directory."
+}
+
 Points to highlight
 * Provide an empty sheet that has a header row that matches the extracted fields.
 * Remember to empty the worksheet before every call to this utility.
@@ -82,13 +104,6 @@ define({
 [Google Javascript Client API](https://developers.google.com/api-client-library/javascript/start/start-js)
 [Google NodeJs Client API](https://github.com/google/google-api-nodejs-client)
 
-## How to generate key file
-// Follow directions on this page at -https://github.com/google/google-api-nodejs-client
-// under Using JWT (Service Tokens)
-// Use the following command to generate the .pem file from the
-// .p12 file downloaded from the Google Developers Console
-// openssl pkcs12 -in key.p12 -nocerts -passin pass:notasecret -nodes -out key.pem
-// put the .pem file in the same directory as this script.
-//
+
 
 DO NOT CHECK IN JIRA RESULTS.
