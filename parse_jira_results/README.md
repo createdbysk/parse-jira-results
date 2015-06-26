@@ -46,11 +46,28 @@ openssl pkcs12 -in <key>.p12 -nocerts -passin pass:notasecret -nodes -out <key>.
 ```
 ** Store the <key>.pem file in the server home directory.
 ** Add the following object as one of the keys in the googleConfiguration in the configuration file
+```
 clientConfiguration: {
     clientEmail: "297654144845-3mkk4rmp9sbpr0e7gvac3gka7u3484ct@developer.gserviceaccount.com",
     clientPemFilePath: "<pem filename. The file has to be stored in the
                         server home directory."
 }
+```
+NOTE: 297654144845-3mkk4rmp9sbpr0e7gvac3gka7u3484ct@developer.gserviceaccount.com is the email address assigned to this application.
+
+### Share the google sheet to store the extracted JIRA data
+* Follow the directions in the Directions sheet of the [Lean Sheets Template](https://docs.google.com/spreadsheets/d/14MfkssorAK9OxNJTOJoljAmkRU-PqazlZfCoOGdYl7o/edit?usp=sharing)
+* This will result in a new Google Sheet.
+* Share the sheet with 297654144845-3mkk4rmp9sbpr0e7gvac3gka7u3484ct@developer.gserviceaccount.com
+* Note the spreadsheet key, which is part of the shareable link, to use with the application that uploads the spreadsheet data.
+** For example, given a shareable link of the following form
+```
+https://docs.google.com/spreadsheets/d/14MfkssorAK9OxNJTOJoljAmkRU-PqazlZfCoOGdYl7o/edit?usp=sharing
+```
+the key is
+```
+14MfkssorAK9OxNJTOJoljAmkRU-PqazlZfCoOGdYl7o
+```
 
 Points to highlight
 * Provide an empty sheet that has a header row that matches the extracted fields.
