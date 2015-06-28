@@ -28,7 +28,7 @@ bin/extractFields.sh <raw json filename> | node bin/calculateMetrics.js -o "Tria
 ```
 
 ## Store results in google spreadsheet
-The application is an ETL process that
+The node application, bin/storeJiraResultsInGoogleSheet, is an ETL process that
 * extracts the data specified by a jql (JIRA query language) query from the configured JIRA instance
 * transforms the json data returned by the extract process to obtain the required fields to store in the input to lean sheets
 * stores the values for the fields obtained from the json data in the specified destination
@@ -96,7 +96,7 @@ The following sections detail how to setup the configuration file and
 obtain the command-line parameters.
 
 ### Setup a new client
-* For the Administrator
+* Instructions to the Administrator
 ** Generate a new P12 Key
 *** Login to console.developers.google.com
 *** Navigate to the project with id euphoric-coral-95415
