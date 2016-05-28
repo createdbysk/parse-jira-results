@@ -12,8 +12,8 @@ jwtClient = new  google.auth.JWT(
 sheets = google.sheets('v4');
 sheets.spreadsheets.values.get({
     auth: jwtClient,
-    spreadsheetId: '163Us5x1cLt086NEVLJJtG3zQkUTLEHgOIrfNoaXv3OQ',
-    range: 'Raw Data!A3:F5'
+    spreadsheetId: '1Y6SCKUNqXg75Rd9Dt0jHbUq7ueODddE-Q32JFwlQR8E',
+    range: 'Sheet1!A2:C4'
 }, function (err, response) {
     var rows,
         row;
@@ -24,9 +24,34 @@ sheets.spreadsheets.values.get({
     console.log(JSON.stringify(response.values));
 });
 
+sheets.spreadsheets.values.update({
+    auth: jwtClient,
+    spreadsheetId: '1Y6SCKUNqXg75Rd9Dt0jHbUq7ueODddE-Q32JFwlQR8E',
+    range: 'Sheet1!A7:C',
+    valueInputOption: 'RAW',
+    resource: {
+        values: [
+            [
+                'A7', 'B7', 'C7'
+            ],
+            [
+                'A8', 'B8', 'C8'
+            ]
+        ]
+    }
+}, function (err, response) {
+    var rows,
+        row;
+    if (err) {
+        console.log("ERROR: ", err);
+        return;
+    }
+    console.log(JSON.stringify(response));
+});
+
 sheets.spreadsheets.batchUpdate({
     auth: jwtClient,
-    spreadsheetId: '163Us5x1cLt086NEVLJJtG3zQkUTLEHgOIrfNoaXv3OQ',
+    spreadsheetId: '1Y6SCKUNqXg75Rd9Dt0jHbUq7ueODddE-Q32JFwlQR8E',
     resource: {
         requests: [
             {
