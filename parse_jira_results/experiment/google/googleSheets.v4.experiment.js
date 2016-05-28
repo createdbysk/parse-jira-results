@@ -10,10 +10,11 @@ jwtClient = new  google.auth.JWT(
 
 
 sheets = google.sheets('v4');
+// Retrieve the values
 sheets.spreadsheets.values.get({
     auth: jwtClient,
     spreadsheetId: '1Y6SCKUNqXg75Rd9Dt0jHbUq7ueODddE-Q32JFwlQR8E',
-    range: 'Sheet1!A2:C4'
+    range: 'Sheet1!A1:C2'
 }, function (err, response) {
     var rows,
         row;
@@ -22,77 +23,70 @@ sheets.spreadsheets.values.get({
         return;
     }
     console.log(JSON.stringify(response.values));
-});
-
-sheets.spreadsheets.values.update({
-    auth: jwtClient,
-    spreadsheetId: '1Y6SCKUNqXg75Rd9Dt0jHbUq7ueODddE-Q32JFwlQR8E',
-    range: 'Sheet1!A7:C',
-    valueInputOption: 'RAW',
-    resource: {
-        values: [
-            [
-                'A7', 'B7', 'C7'
-            ],
-            [
-                'A8', 'B8', 'C8'
+    // Add values to the sheet.
+    sheets.spreadsheets.values.update({
+        auth: jwtClient,
+        spreadsheetId: '1Y6SCKUNqXg75Rd9Dt0jHbUq7ueODddE-Q32JFwlQR8E',
+        range: 'Sheet1!A1:C',
+        valueInputOption: 'RAW',
+        resource: {
+            values: [
+                [
+                    'A1', 'B1', 'C1'
+                ],
+                [
+                    'A2', 'B2', 'C2'
+                ]
             ]
-        ]
-    }
-}, function (err, response) {
-    var rows,
-        row;
-    if (err) {
-        console.log("ERROR: ", err);
-        return;
-    }
-    console.log(JSON.stringify(response));
-});
-
-sheets.spreadsheets.batchUpdate({
-    auth: jwtClient,
-    spreadsheetId: '1Y6SCKUNqXg75Rd9Dt0jHbUq7ueODddE-Q32JFwlQR8E',
-    resource: {
-        requests: [
-            {
-                deleteDimension: {
-                    range: {
-                        sheetId: 1,
-                        dimension: 'ROWS',
-                        startIndex: 2,
-                        endIndex: 3
-                    }
-                }
+        }
+    }, function (err, response) {
+        var rows,
+            row;
+        if (err) {
+            console.log("ERROR: ", err);
+            return;
+        }
+        console.log("ADDED ROWS");
+        console.log(JSON.stringify(response));
+        // Retrieve the values
+        sheets.spreadsheets.values.get({
+            auth: jwtClient,
+            spreadsheetId: '1Y6SCKUNqXg75Rd9Dt0jHbUq7ueODddE-Q32JFwlQR8E',
+            range: 'Sheet1!A1:C2'
+        }, function (err, response) {
+            var rows,
+                row;
+            if (err) {
+                console.log("ERROR: ", err);
+                return;
             }
-        ]
-    }
+            console.log(JSON.stringify(response.values));
+            // Delete the values
+            sheets.spreadsheets.batchUpdate({
+                auth: jwtClient,
+                spreadsheetId: '1Y6SCKUNqXg75Rd9Dt0jHbUq7ueODddE-Q32JFwlQR8E',
+                resource: {
+                    requests: [
+                        {
+                            deleteDimension: {
+                                range: {
+                                    sheetId: 0,
+                                    dimension: 'ROWS',
+                                    startIndex: 0,
+                                    endIndex: 2
+                                }
+                            }
+                        }
+                    ]
+                }
+            }, function (err, response) {
+                if (err) {
+                    console.log("ERROR: ", err);
+                    return;
+                }
+                console.log("DELETED ROWS");
+                console.log(JSON.stringify(response));
+            });
+        });
+    });
 });
-//
-// jwtClient.authorize(function (err, tokens) {
-//     var auth,
-//         sheets;
-//     if (err) {
-//         console.log("ERROR", err);
-//     }
-//     else {
-//         console.log("TOKEN", tokens);
-//         auth = {
-//             type: tokens.token_type,
-//             value: tokens.access_token
-//         };
-//         sheets = google.sheets('v4');
-//         sheets.spreadsheets.values.get({
-//             auth: jwtClient,
-//             spreadsheetId: '163Us5x1cLt086NEVLJJtG3zQkUTLEHgOIrfNoaXv3OQ',
-//             range: 'Raw Data!A3:F'
-//         }, function (err, response) {
-//             var rows,
-//                 row;
-//             if (err) {
-//                 console.log("ERROR: ", err);
-//                 return;
-//             }
-//             console.log(JSON.stringify(response.values));
-//         });
-//     }
-// });
