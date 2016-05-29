@@ -44,6 +44,7 @@ requirejs(['commander',
         worksheetIndex = parseInt(program.args[3]);
         requirejs([configurationFileName], function (configuration) {
             jiraRest = JiraRest(configuration.jiraConfiguration);
+            console.log("Pulling data for query", searchQuery)
             jiraRest.search(searchQuery, function (err, result) {
                 transformLoader.loadModules(configuration.moduleConfiguration, function (err, transforms) {
                     var fields;
@@ -57,6 +58,7 @@ requirejs(['commander',
                         };
                     processResults = function (results) {
                         var issuesWithExtractFields;
+                        console.log("Found", result.issues.length, "issues.")
                         issuesWithExtractFields =
                             linq.from(results.issues)
                                 .select(processIssue);
@@ -71,12 +73,18 @@ requirejs(['commander',
                                     console.log("ERROR createClient", err);
                                 }
                                 else {
+                                    console.log("Loading results into google spreadsheet", spreadsheetKey);
                                     client.getSpreadsheet(spreadsheetKey,
                                         function (err, spreadsheet) {
                                             async.eachLimit(allIssuesWithExtractFields.toArray(),
                                                             configuration.googleConfiguration.numberOfRowsToAddInParallel,
                                                 function (issueWithExtractFields, continuation) {
-                                                    spreadsheet.addRow(worksheetIndex, issueWithExtractFields, continuation);
+                                                    spreadsheet.addRow(worksheetIndex, issueWithExtractFields, function (err) {
+                                                        if (err) {
+                                                            console.log("Add Row Error: ", err, issueWithExtractFields)
+                                                        }
+                                                        continuation(err);
+                                                    });
                                                 },
                                                 function (err) {
                                                     console.log("DONE");
@@ -91,7 +99,6 @@ requirejs(['commander',
                              }
                         );
                     };
-
                     fields = processResults(result);
                     displayResults(null, fields);
                 });
