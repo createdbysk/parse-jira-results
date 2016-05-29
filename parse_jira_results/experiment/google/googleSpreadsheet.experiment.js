@@ -14,7 +14,7 @@ googleapis = require('googleapis');
 // put the .pem file in the same directory as this script.
 jwtClient = new  googleapis.auth.JWT(
     '297654144845-3mkk4rmp9sbpr0e7gvac3gka7u3484ct@developer.gserviceaccount.com',
-    '2cad7fbdbae95800c9c1a4e59f47d594e220765c-privatekey.pem',
+    'KasasaJira.pem',
     null,
     // scope from https://developers.google.com/google-apps/spreadsheets/#authorizing_requests_with_oauth_20
     'https://spreadsheets.google.com/feeds'
@@ -42,7 +42,7 @@ jwtClient.authorize(function (err, tokens) {
             console.log("RowData", JSON.stringify(rowData));
         });
         // Add a row to second worksheet.
-        mySheet.addRow(2, {This:"25", is:"345", a:"3059", test:'ueteu'}, function (err) {
+        mySheet.addRow(1, {This:"25", is:"345", a:"3059", test:'ueteu'}, function (err) {
             console.log("ADD ERR", err);
         });
         // Get info about the worksheets.
