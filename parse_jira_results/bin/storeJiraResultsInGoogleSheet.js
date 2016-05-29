@@ -46,62 +46,67 @@ requirejs(['commander',
             jiraRest = JiraRest(configuration.jiraConfiguration);
             console.log("Pulling data for query", searchQuery)
             jiraRest.search(searchQuery, function (err, result) {
-                transformLoader.loadModules(configuration.moduleConfiguration, function (err, transforms) {
-                    var fields;
-                    processIssue =
-                        function (issue) {
-                            var resultsWithExtractedFields;
-                            transformer(issue, transforms, function (err, extractedFields) {
-                                resultsWithExtractedFields = extractedFields;
-                            });
-                            return resultsWithExtractedFields;
+                if (err) {
+                    console.log("ERROR WITH JIRA QUERY", err);
+                } else {
+                    console.log("JIRA QUERY SUCCEEDED");
+                    transformLoader.loadModules(configuration.moduleConfiguration, function (err, transforms) {
+                        var fields;
+                        processIssue =
+                            function (issue) {
+                                var resultsWithExtractedFields;
+                                transformer(issue, transforms, function (err, extractedFields) {
+                                    resultsWithExtractedFields = extractedFields;
+                                });
+                                return resultsWithExtractedFields;
+                            };
+                        processResults = function (results) {
+                            var issuesWithExtractFields;
+                            console.log("Found", result.issues.length, "issues.")
+                            issuesWithExtractFields =
+                                linq.from(results.issues)
+                                    .select(processIssue);
+                            return issuesWithExtractFields;
                         };
-                    processResults = function (results) {
-                        var issuesWithExtractFields;
-                        console.log("Found", result.issues.length, "issues.")
-                        issuesWithExtractFields =
-                            linq.from(results.issues)
-                                .select(processIssue);
-                        return issuesWithExtractFields;
-                    };
-                    displayResults = function (err, allIssuesWithExtractFields) {
-                        googleSpreadsheetClientFactory.createClient(
-                            configuration.googleConfiguration.clientConfiguration,
-                            function (err, client) {
-                                var spreadsheet;
-                                if (err) {
-                                    console.log("ERROR createClient", err);
-                                }
-                                else {
-                                    console.log("Loading results into google spreadsheet", spreadsheetKey);
-                                    client.getSpreadsheet(spreadsheetKey,
-                                        function (err, spreadsheet) {
-                                            async.eachLimit(allIssuesWithExtractFields.toArray(),
-                                                            configuration.googleConfiguration.numberOfRowsToAddInParallel,
-                                                function (issueWithExtractFields, continuation) {
-                                                    spreadsheet.addRow(worksheetIndex, issueWithExtractFields, function (err) {
+                        displayResults = function (err, allIssuesWithExtractFields) {
+                            googleSpreadsheetClientFactory.createClient(
+                                configuration.googleConfiguration.clientConfiguration,
+                                function (err, client) {
+                                    var spreadsheet;
+                                    if (err) {
+                                        console.log("ERROR createClient", err);
+                                    }
+                                    else {
+                                        console.log("Loading results into google spreadsheet", spreadsheetKey);
+                                        client.getSpreadsheet(spreadsheetKey,
+                                            function (err, spreadsheet) {
+                                                async.eachLimit(allIssuesWithExtractFields.toArray(),
+                                                                configuration.googleConfiguration.numberOfRowsToAddInParallel,
+                                                    function (issueWithExtractFields, continuation) {
+                                                        spreadsheet.addRow(worksheetIndex, issueWithExtractFields, function (err) {
+                                                            if (err) {
+                                                                console.log("Add Row Error: ", err, issueWithExtractFields)
+                                                            }
+                                                            continuation(err);
+                                                        });
+                                                    },
+                                                    function (err) {
+                                                        console.log("DONE");
                                                         if (err) {
-                                                            console.log("Add Row Error: ", err, issueWithExtractFields)
+                                                            console.log("ERROR addRow", err);
                                                         }
-                                                        continuation(err);
-                                                    });
-                                                },
-                                                function (err) {
-                                                    console.log("DONE");
-                                                    if (err) {
-                                                        console.log("ERROR addRow", err);
                                                     }
-                                                }
-                                            );
-                                        }
-                                    );
-                                }
-                             }
-                        );
-                    };
-                    fields = processResults(result);
-                    displayResults(null, fields);
-                });
+                                                );
+                                            }
+                                        );
+                                    }
+                                 }
+                            );
+                        };
+                        fields = processResults(result);
+                        displayResults(null, fields);
+                    });
+                }
             });
 
         });
