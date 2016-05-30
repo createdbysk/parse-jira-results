@@ -110,29 +110,5 @@ requirejs(['commander',
             });
 
         });
-    //     transformLoader.loadModules(program.extractor, function (err, transforms) {
-    //         processIssue =
-    //             function (issue) {
-    //                 var resultsWithExtractedFields;
-    //                 transformer(issue, transforms, function (err, extractedFields) {
-    //                     resultsWithExtractedFields = extractedFields;
-    //                 });
-    //                 return resultsWithExtractedFields;
-    //             };
-    //         processResults = function (results) {
-    //             var issuesWithExtractFields;
-    //             issuesWithExtractFields =
-    //                 linq.from(results.issues)
-    //                     .select(processIssue);
-    //             return issuesWithExtractFields;
-    //         };
-    //         displayResults = function (err, allIssuesWithExtractFields) {
-    //             linq.from(allIssuesWithExtractFields)
-    //                 .forEach(function (issueWithExtractFields) {
-    //                     console.log(JSON.stringify(issueWithExtractFields));
-    //                 });
-    //         };
-    //         readFileAndIterate(program.args[0], processResults, displayResults);
-    //     });
     }
 );
