@@ -13,9 +13,9 @@
     "commander": "^2.6.0",
     "fs": "0.0.2",
     "google-auth-library": "^0.9.8",
-    "google-spreadsheet": "git+ssh://git@github.com:satvidh/node-google-spreadsheet#add-gdata-version",
+    "google-spreadsheet": "git+https://github.com/satvidh/node-google-spreadsheet#add-gdata-version",
     "googleapis": ">2.x",
-    "library": "git+ssh://git@github.com:satvidh/library.git#0.0.3",
+    "library": "git+https://github.com/satvidh/library.git#0.0.3",
     "linq": "^3.0.4-beta",
     "moment": "^2.8.4",
     "requirejs": "^2.1.15"

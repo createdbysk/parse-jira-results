@@ -1,6 +1,22 @@
 Implements the ability to parse the results from the JIRA rest API queries.
 
 # Usage
+
+## Overwrite JIRA metrics in google spreadsheet
+You can use a docker container to run this application.
+
+1. Build the docker image.
+
+        docker build -t jira_metrics .
+
+2. Run the docker container to execute the application.
+
+        docker run -it -v ~/path/to/configuration:/opt/config jira_metrics /opt/config/storeJiraResultsInGoogleSheetConfiguration-Kasasa.js <jql> <google spreadsheetId> <sheet name in spreadsheet>
+
+3. To run this repeatedly at regular intervals
+
+        docker run -it -v ~/path/to/configuration:/opt/config --entrypoint watch jira_metrics -n <interval in seconds> "node bin/overwriteJiraResultsInGoogleSheet.js /opt/config/storeJiraResultsInGoogleSheetConfiguration-Kasasa.js <jql> <google spreadsheetId> <sheet name in spreadsheet>" 
+
 ## Extract Fields
 Use bin/extractFields.js to extract fields from the raw JSON. Pass the extractors as follows
 
