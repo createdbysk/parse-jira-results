@@ -20,9 +20,10 @@ define(['linq',
                 else {
                     statusFilter(statuses,
                         function (status) {
-                            return status.from === "Open" &&
-                                status.to !== "Triage" &&
-                                status.to !== "Closed";
+                            return (status.from === "Triaged"
+                                    && status.to === "In Work") ||
+                                    (status.from === "Open"
+                                    && status.to === "In Progress");
                         },
                         function (error, possibleCommitmentPoints) {
                             var startDate;

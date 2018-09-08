@@ -21,7 +21,7 @@
                 else {
                     statusFilter(statuses,
                         function (status) {
-                            return status.to === "Closed";
+                            return status.to === "Closed" || status.to === "Complete";
                         },
                         function (error, possibleExitPoints) {
                             endDate = linq.from(possibleExitPoints)
