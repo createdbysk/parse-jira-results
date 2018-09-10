@@ -58,7 +58,12 @@ requirejs(['commander',
                         processIssue =
                             function (issue) {
                                 var resultsWithExtractedFields;
-                                transformer(issue, transforms, function (err, extractedFields) {
+                                var issueAndModuleConfiguration;
+                                issueAndModuleConfiguration = {
+                                  issue: issue,
+                                  moduleConfiguration: configuration.moduleConfiguration
+                                }
+                                transformer(issueAndModuleConfiguration, transforms, function (err, extractedFields) {
                                     resultsWithExtractedFields = extractedFields;
                                 });
                                 return resultsWithExtractedFields;
@@ -90,7 +95,7 @@ requirejs(['commander',
                                 }
                             }
                             storeResults = function(properties, arrayOfIssues, callback) {
-                                console.log("In storeResults");
+                                console.log("In storeResults", JSON.stringify(arrayOfIssues, null, 4));
                                 // Use a Legacy client because it uses the field names to determine the columns to store
                                 // the data into.
                                 googleSpreadsheetClientFactory.createLegacyClient(

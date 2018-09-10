@@ -1,7 +1,9 @@
 define(['linq', 'lib/issueCreatedDateExtractor'], function (linq, issueCreatedDateExtractor) {
-    return function (issue, callback) {
+    return function (issueAndModuleConfiguration, callback) {
         var statuses,
-            initialStatus;
+            initialStatus,
+            issue;
+        issue = issueAndModuleConfiguration.issue;
         statuses = linq.from(issue.changelog.histories)
             .selectMany(function (history) {
                 var status;
@@ -14,9 +16,9 @@ define(['linq', 'lib/issueCreatedDateExtractor'], function (linq, issueCreatedDa
                     });
                 return status;
             });
-        // Make the initial transition from created to Triage at the created date 
+        // Make the initial transition from created to Triage at the created date
         // with the assumption that the start state is Triage.
-        issueCreatedDateExtractor(issue, function (err, createdDate) {
+        issueCreatedDateExtractor(issueAndModuleConfiguration, function (err, createdDate) {
             initialStatus = {
                 date: createdDate,
                 from: "Created",

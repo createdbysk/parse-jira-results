@@ -12,9 +12,10 @@
          * @param  {Object}     issue The issue
          * @param  {Function}   callback The callback function of the form function (err, endDate)
          */
-        return function (issue, callback) {
-            var endDate;
-            issueStatusExtractor(issue, function (err, statuses) {
+        return function (issueAndModuleConfiguration, callback) {
+            var endDate,
+                issue;
+            issueStatusExtractor(issueAndModuleConfiguration, function (err, statuses) {
                 if (err) {
                     callback(err);
                 }

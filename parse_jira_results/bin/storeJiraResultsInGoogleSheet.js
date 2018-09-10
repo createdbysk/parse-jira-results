@@ -54,7 +54,11 @@ requirejs(['commander',
                         processIssue =
                             function (issue) {
                                 var resultsWithExtractedFields;
-                                transformer(issue, transforms, function (err, extractedFields) {
+                                issueAndModuleConfiguration = {
+                                  issue: issue,
+                                  moduleConfiguration: configuration.moduleConfiguration
+                                }
+                                transformer(issueAndModuleConfiguration, transforms, function (err, extractedFields) {
                                     resultsWithExtractedFields = extractedFields;
                                 });
                                 return resultsWithExtractedFields;

@@ -1,6 +1,8 @@
 define(['linq'], function (linq) {
-    return function (issue, callback) {
-        var storyPoints;
+    return function (issueAndModuleConfiguration, callback) {
+        var storyPoints,
+            issue;
+        issue = issueAndModuleConfiguration.issue;
         storyPoints = linq.from(issue.changelog.histories)
             .selectMany(function (history) {
                 var storyPoints;

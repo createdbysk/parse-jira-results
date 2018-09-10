@@ -2,7 +2,7 @@
  * Given an issue, returns its name.
  */
 define(function () {
-    return function (issue, callback) {
-        callback(null, issue.key);
+    return function (issueAndModuleConfiguration, callback) {
+        callback(null, issueAndModuleConfiguration.issue.key);
     }
 });
