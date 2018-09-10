@@ -1,44 +1,16 @@
 /**
- * Given an issue, extracts the end date for the issue.
+ * Given an issue, extracts the start date for the issue.
  */
- define(['linq',
-         'lib/statusFilter',
-         'lib/issueStatusExtractor',
-         'lib/issueDateFormatter'],
-     function (linq, statusFilter, issueStatusExtractor, issueDateFormatter) {
+define(['lib/issueDateExtractor'],
+    function (issueDateExtractor) {
         'use strict';
         /**
-         * Given an issue, extracts the end date for the issue
-         * @param  {Object}     issue The issue
-         * @param  {Function}   callback The callback function of the form function (err, endDate)
+         * Given an issue, extracts the start date for the issue
+         * @param  {Objct}      issue The issue
+         * @param  {Function}   callback The callback function of the form function (err, startDate)
          */
         return function (issueAndModuleConfiguration, callback) {
-            var endDate,
-                issue;
-            issueStatusExtractor(issueAndModuleConfiguration, function (err, statuses) {
-                if (err) {
-                    callback(err);
-                }
-                else {
-                    statusFilter(statuses,
-                        function (status) {
-                            return status.to === "Closed" || status.to === "Complete";
-                        },
-                        function (error, possibleExitPoints) {
-                            endDate = linq.from(possibleExitPoints)
-                                            .select(function (status) {
-                                                return status.date;
-                                            })
-                                            .lastOrDefault();
-                            issueDateFormatter(endDate,
-                                function (err, formattedEndDate) {
-                                    callback(null, formattedEndDate);
-                                }
-                            );
-                        }
-                    );
-                }
-            });
+          issueDateExtractor(issueAndModuleConfiguration, "endDate", callback);
         };
     }
 );

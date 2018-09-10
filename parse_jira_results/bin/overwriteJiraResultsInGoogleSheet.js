@@ -64,6 +64,9 @@ requirejs(['commander',
                                   moduleConfiguration: configuration.moduleConfiguration
                                 }
                                 transformer(issueAndModuleConfiguration, transforms, function (err, extractedFields) {
+                                    if (err) {
+                                      console.log(err);
+                                    }
                                     resultsWithExtractedFields = extractedFields;
                                 });
                                 return resultsWithExtractedFields;
