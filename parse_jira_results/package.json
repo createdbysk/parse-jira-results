@@ -14,7 +14,7 @@
     "fs": "0.0.2",
     "google-auth-library": "^0.9.8",
     "google-spreadsheet": "git+https://github.com/satvidh/node-google-spreadsheet#add-gdata-version",
-    "googleapis": ">2.x",
+    "googleapis": "^33.0.0",
     "library": "git+https://github.com/satvidh/library.git",
     "linq": "^3.0.4-beta",
     "moment": "^2.8.4",

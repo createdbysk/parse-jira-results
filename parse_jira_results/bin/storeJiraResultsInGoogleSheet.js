@@ -33,7 +33,6 @@ requirejs(['commander',
             spreadsheetKey,
             worksheetIndex,
             jiraRest;
-
         program
             .version('0.0.1')
             .usage('configuration_file_name search_query spreadsheet_key worksheet_index')
@@ -69,7 +68,7 @@ requirejs(['commander',
                             return issuesWithExtractFields;
                         };
                         displayResults = function (err, allIssuesWithExtractFields) {
-                            googleSpreadsheetClientFactory.createClient(
+                            googleSpreadsheetClientFactory.createLegacyClient(
                                 configuration.googleConfiguration.clientConfiguration,
                                 function (err, client) {
                                     var spreadsheet;

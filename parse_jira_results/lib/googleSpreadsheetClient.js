@@ -11,8 +11,7 @@ define(['googleapis',
             var jwtClient,
                 client,
                 makeGetSpreadsheet;
-
-            jwtClient = new google.auth.JWT(
+            jwtClient = new google.google.auth.JWT(
                 configuration.clientEmail,
                 configuration.clientPemFilePath,
                 null,
@@ -53,7 +52,7 @@ define(['googleapis',
         createV4Client = function (configuration, callback) {
             var jwtClient;
 
-            jwtClient = new google.auth.JWT(
+            jwtClient = new google.google.auth.JWT(
                 configuration.clientEmail,
                 configuration.clientPemFilePath,
                 null,
@@ -72,7 +71,7 @@ define(['googleapis',
                         getSheetProperties,
                         deleteRowsRange;
 
-                    sheets = google.sheets('v4');
+                    sheets = google.google.sheets('v4');
                     /**
                      * Get the properties of the sheet.
                      *
@@ -90,7 +89,7 @@ define(['googleapis',
                                 console.log("getSheetProperties: sheets.spreadsheets.get " + spreadsheetId + " " + sheetName + " failed with ERROR: ", err);
                                 callback(err);
                             }
-                            propertiesInResponse = response.sheets[0].properties;
+                            propertiesInResponse = response.data.sheets[0].properties;
                             properties = {
                                 sheetId: propertiesInResponse.sheetId,
                                 sheetIndex: propertiesInResponse.index,

@@ -98,12 +98,14 @@ requirejs(['commander',
                                     function (err, client) {
                                         var spreadsheet,
                                             worksheetIndex;
-                                        worksheetIndex = 1;
+                                        // The index used by the legacy client is 1 based while
+                                        // the properties returned by the V4 Client are zero based.
+                                        worksheetIndex = properties.sheetIndex + 1;
                                         if (err) {
                                             console.log("ERROR createClient", err);
                                         }
                                         else {
-                                            console.log("Loading results into google spreadsheet", spreadsheetId);
+                                            console.log("Loading results into google spreadsheet", spreadsheetId, " into sheet with index ", worksheetIndex);
                                             client.getSpreadsheet(spreadsheetId,
                                                 function (err, spreadsheet) {
                                                     async.eachLimit(arrayOfIssues,
@@ -135,13 +137,13 @@ requirejs(['commander',
                                             uploadResultsCallback(err);
                                         }
                                         clearSheet(v4Client, properties, function (err) {
-                                            var arrayOfIssues;
-                                            if (err) {
-                                                uploadResultsCallback(err);
-                                            }
-                                            arrayOfIssues = allIssuesWithExtractFields.toArray();
-                                            storeResults(properties, arrayOfIssues, uploadResultsCallback);
-                                        });
+                                          var arrayOfIssues;
+                                          if (err) {
+                                              uploadResultsCallback(err);
+                                          }
+                                          arrayOfIssues = allIssuesWithExtractFields.toArray();
+                                          storeResults(properties, arrayOfIssues, uploadResultsCallback);
+                                      });
                                     });
                                 }
                             );
