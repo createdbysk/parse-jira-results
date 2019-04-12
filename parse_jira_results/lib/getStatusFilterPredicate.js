@@ -9,6 +9,11 @@ define(function () {
         if (dateConfiguration.hasOwnProperty(issueType)) {
           filter = dateConfiguration[issueType];
         }
+        else {
+          if (dateConfiguration.hasOwnProperty("Default")) {
+            filter = dateConfiguration["Default"];
+          }
+        }
       }
       if (!filter) {
         callback("ERROR: moduleConfiguration does not have a filter defined for " + issueType + " for " + property + ".");
