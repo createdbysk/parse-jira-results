@@ -18,14 +18,14 @@ define(['linq', 'lib/issueCreatedDateExtractor'], function (linq, issueCreatedDa
             });
         // Make the initial transition from created to Triage at the created date
         // with the assumption that the start state is Triage.
-        issueCreatedDateExtractor(issueAndModuleConfiguration, function (err, createdDate) {
-            initialStatus = {
-                date: createdDate,
-                from: "Created",
-                to: "Triage"
-            };
+        //issueCreatedDateExtractor(issueAndModuleConfiguration, function (err, createdDate) {
+         //   initialStatus = {
+         //       date: createdDate,
+         //       from: "New",
+         //       to: "Ready for Work"
+         //   };
             // Add the start state to the beginning of statuses.
-            statuses = linq.make(initialStatus).concat(statuses);
+         //   statuses = linq.make(initialStatus).concat(statuses);
             callback(null, statuses);
         });
     };
