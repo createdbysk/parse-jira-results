@@ -9,6 +9,10 @@ var moment,
 moment = require('moment');
 // Display today.
 console.log("NOW", moment().format("YYYY-MM-DD HH:MM:SS"));
+// Display null.
+console.log("null", moment(null).format("YYYY-MM-DD HH:MM:SS"));
+// Display undefined.
+console.log("undefined", moment(undefined).format("YYYY-MM-DD HH:MM:SS"));
 // Convert a date
 dateToConvert = '2014-12-01T15:58:25.000+0000';
 date1 = moment(dateToConvert);

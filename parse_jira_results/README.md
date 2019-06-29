@@ -217,5 +217,4 @@ Points to highlight
 [Google NodeJs Client API](https://github.com/google/google-api-nodejs-client)
 
 
-
 DO NOT CHECK IN JIRA RESULTS.

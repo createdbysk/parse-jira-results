@@ -2,7 +2,7 @@
  * Given an issue, returns its created date.
  */
 define(function () {
-    return function (issue, callback) {
-        callback(null, issue.fields.created);
+    return function (issueAndModuleConfiguration, callback) {
+        callback(null, issueAndModuleConfiguration.issue.fields.created);
     }
 });

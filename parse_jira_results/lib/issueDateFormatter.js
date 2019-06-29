@@ -15,9 +15,14 @@ define(['moment'], function (moment) {
      */
     return function (date, callback) {
         var formattedDate;
-        formattedDate = moment(date).format(formatString);
-        if (formattedDate === 'Invalid date') {
-            formattedDate = date;
+        if (!date) {
+            formattedDate = "";
+        }
+        else {
+            formattedDate = moment(date).format(formatString);
+            if (formattedDate === 'Invalid date') {
+                formattedDate = "";
+            }
         }
         callback(null, formattedDate);
     };

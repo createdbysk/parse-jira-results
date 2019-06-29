@@ -1,9 +1,10 @@
-FROM mhart/alpine-node:5.11.1
+FROM mhart/alpine-node:8.11.4
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 COPY package.json /usr/src/app
+COPY package-lock.json /usr/src/app
 RUN apk add --update git
 RUN npm install
 
