@@ -215,6 +215,7 @@ Points to highlight
 [Google Oauth2 playground](https://developers.google.com/oauthplayground/)
 [Google Javascript Client API](https://developers.google.com/api-client-library/javascript/start/start-js)
 [Google NodeJs Client API](https://github.com/google/google-api-nodejs-client)
+[Add certificates to docker image](https://hackernoon.com/alpine-docker-image-with-secured-communication-ssl-tls-go-restful-api-128eb6b54f1f)
 
 
 
