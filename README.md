@@ -2,6 +2,24 @@ Implements the ability to parse the results from the JIRA rest API queries.
 
 # Usage
 
+## Golang
+
+### Test with Local JIRA
+#### First time
+
+        make run-jira
+#### Subsequent times
+
+        make start-jira
+
+### Run query and use template to format output
+
+        JIRA_URL=https://localhost:58080 JIRA_USERNAME=user JIRA_PASSWORD=password ./jira -maxResults 50 ../experiments/jira_renderer/checkStatusChange.tpl 'project = "TEST")' | tee ~/Documents/output.txt
+
+## References
+* [Upload to google sheets](https://stackoverflow.com/questions/42362702/how-to-import-a-csv-file-using-google-sheets-api-v4)
+* [Sheets V4 Go Client](https://pkg.go.dev/google.golang.org/api/sheets/v4)
+
 ## Overwrite JIRA metrics in google spreadsheet
 You can use a docker container to run this application.
 
@@ -215,6 +233,7 @@ Points to highlight
 [Google Oauth2 playground](https://developers.google.com/oauthplayground/)
 [Google Javascript Client API](https://developers.google.com/api-client-library/javascript/start/start-js)
 [Google NodeJs Client API](https://github.com/google/google-api-nodejs-client)
+[Add certificates to docker image](https://hackernoon.com/alpine-docker-image-with-secured-communication-ssl-tls-go-restful-api-128eb6b54f1f)
 
 
 
