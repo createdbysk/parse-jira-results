@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	jira "gopkg.in/andygrunwald/go-jira.v1"
 )
@@ -40,6 +41,14 @@ func main() {
 				fmt.Printf("%s: %+v\n", issue.Key, issue.Fields.Summary)
 				fmt.Printf("Type: %s\n", issue.Fields.Type.Name)
 				fmt.Printf("Priority: %s\n", issue.Fields.Priority.Name)
+				if len(issue.Changelog.Histories) > 0 {
+					var t time.Time
+					t, err = time.Parse("2006-01-02T15:04:05.000-0700", issue.Changelog.Histories[0].Created)
+					if err != nil {
+						log.Fatal(err)
+					}
+					fmt.Printf("Start: %v\n", t)
+				}
 				fmt.Println("========================================================")
 			}
 			return
