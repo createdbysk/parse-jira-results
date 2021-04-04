@@ -1,15 +1,13 @@
 package model
 
 import (
-	"encoding/json"
 	"reflect"
 	"testing"
-	"time"
 )
 
 func TestUnmarshalJSON(t *testing.T) {
 	// GIVEN
-	serialized, _ := json.Marshal(map[string]string{
+	input := map[string]string{
 		"name":        "TICKET-1",
 		"priority":    "3-Low",
 		"type":        "Task",
@@ -19,30 +17,29 @@ func TestUnmarshalJSON(t *testing.T) {
 		"createdDate": "2021-02-28T00:00:00Z",
 		"startDate":   "2021-03-01T00:00:00Z",
 		"endDate":     "2021-03-02T00:00:00Z",
-	})
-	startDate, _ := time.Parse("2006-01-02", "2021-03-01")
-	endDate, _ := time.Parse("2006-01-02", "2021-03-02")
+	}
+
 	expected := Ticket{
-		Name:       "TICKET-1",
-		Priority:   "3-Low",
-		Type:       "Task",
-		Status:     "Open",
-		Resolution: "Unresolved",
-		Sprint:     "Sprint",
-		StartDate:  startDate,
-		EndDate:    endDate,
+		"name":        "TICKET-1",
+		"priority":    "3-Low",
+		"type":        "Task",
+		"status":      "Open",
+		"resolution":  "Unresolved",
+		"sprint":      "Sprint",
+		"createdDate": "2021-02-28T00:00:00Z",
+		"startDate":   "2021-03-01T00:00:00Z",
+		"endDate":     "2021-03-02T00:00:00Z",
 	}
 
 	// WHEN
-	var actual Ticket
-	err := json.Unmarshal(serialized, &actual)
+	actual, err := NewTicket(input)
 
 	if err != nil {
-		t.Errorf("Ticket.UnmarshalJSON %v", err)
+		t.Errorf("NewTicket errored: %v", err)
 	}
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf(
-			"Ticket.UnmarshalJSON expected: %v actual: %v",
+			"NewTicket() expected: %v actual: %v",
 			expected, actual,
 		)
 	}
