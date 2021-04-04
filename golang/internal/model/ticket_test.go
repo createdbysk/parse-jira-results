@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestUnmarshalJSON(t *testing.T) {
+func TestNewTicket(t *testing.T) {
 	// GIVEN
 	input := map[string]string{
 		"name":        "TICKET-1",
@@ -19,21 +19,12 @@ func TestUnmarshalJSON(t *testing.T) {
 		"endDate":     "2021-03-02T00:00:00Z",
 	}
 
-	expected := Ticket{
-		"name":        "TICKET-1",
-		"priority":    "3-Low",
-		"type":        "Task",
-		"status":      "Open",
-		"resolution":  "Unresolved",
-		"sprint":      "Sprint",
-		"createdDate": "2021-02-28T00:00:00Z",
-		"startDate":   "2021-03-01T00:00:00Z",
-		"endDate":     "2021-03-02T00:00:00Z",
-	}
+	expected := TicketFixture()
 
 	// WHEN
 	actual, err := NewTicket(input)
 
+	// THEN
 	if err != nil {
 		t.Errorf("NewTicket errored: %v", err)
 	}
