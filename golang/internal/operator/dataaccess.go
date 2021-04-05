@@ -1,6 +1,9 @@
 package operator
 
-type Connection interface{}
+type Connection interface {
+	Execute() Iterator
+}
+
 type Query interface{}
 
 type Iterator interface {

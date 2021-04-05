@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	jira "gopkg.in/andygrunwald/go-jira.v1"
 	"local.dev/jira/internal/model"
 )
 
@@ -71,12 +72,29 @@ func newMockServer() *httptest.Server {
 }
 
 type mockJiraConnection struct {
-	client *http.Client
+	s *httptest.Server
+	t *testing.T
 }
 
-func newMockJiraConnection(s *httptest.Server) Connection {
-	client := s.Client()
-	return &mockJiraConnection{client}
+func newMockJiraConnection(s *httptest.Server, t *testing.T) Connection {
+	return &mockJiraConnection{s, t}
+}
+
+type mockIterator struct {
+	issues []jira.Issue
+	index  int
+}
+
+func (c *mockJiraConnection) execute(q Query) Iterator {
+	var jql string
+	q.Get(&jql)
+	jiraClient, _ := jira.NewClient(c.s.Client(), c.s.URL)
+	options := jira.SearchOptions{
+		MaxResults: 3,
+		Expand:     "changelog",
+	}
+	issues, _, _ := jiraClient.Issue.Search(jql, &options)
+	return &mockIterator{issues: issues}
 }
 
 type mockJiraQuery struct {
