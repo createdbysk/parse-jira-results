@@ -3,11 +3,9 @@ package operator
 import (
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 
-	jira "gopkg.in/andygrunwald/go-jira.v1"
 	"local.dev/jira/internal/model"
 )
 
@@ -71,65 +69,66 @@ func newMockServer() *httptest.Server {
 	return mockServer
 }
 
-type mockJiraConnection struct {
-	s *httptest.Server
-	t *testing.T
-}
-
-func newMockJiraConnection(s *httptest.Server, t *testing.T) Connection {
-	return &mockJiraConnection{s, t}
+type mockConnection struct {
+	called bool
 }
 
 type mockIterator struct {
-	issues []jira.Issue
-	index  int
+	more bool
 }
 
-func (c *mockJiraConnection) execute(q Query) Iterator {
-	var jql string
-	q.Get(&jql)
-	jiraClient, _ := jira.NewClient(c.s.Client(), c.s.URL)
-	options := jira.SearchOptions{
-		MaxResults: 3,
-		Expand:     "changelog",
-	}
-	issues, _, _ := jiraClient.Issue.Search(jql, &options)
-	return &mockIterator{issues: issues}
+func (it *mockIterator) Next(value interface{}) bool {
+	it.more = !it.more
+	*(value.(*bool)) = it.more
+	return it.more
 }
 
-type mockJiraQuery struct {
-	jql string
+type mockQuery struct {
+	it Iterator
 }
 
-func newMockJiraQuery(jql string) Query {
-	return &mockJiraQuery{jql}
+func (q *mockQuery) Get(value interface{}) error {
+	*(value.(*Iterator)) = q.it
+	return nil
 }
 
-func TestJiraExtractor(t *testing.T) {
+func (c *mockConnection) Execute(q Query) Iterator {
+	var it Iterator
+	q.Get(&it)
+	c.called = true
+	return it
+}
+
+func TestExtractor(t *testing.T) {
 	// GIVEN
-	var ticket model.Ticket
-	jql := "project=TEST"
-	mockServer := newMockServer()
-	defer mockServer.Close()
-	connection := newMockJiraConnection(mockServer)
-	query := newMockJiraQuery(jql)
-
-	expected := ticketsFixture()
+	connection := &mockConnection{}
+	iterator := &mockIterator{}
+	query := &mockQuery{iterator}
 
 	// WHEN
-	extractor, errExtractor := NewExtractor(connection)
-	if errExtractor != nil {
-		t.Fatalf("NewExtractor() failed with error: %v", errExtractor)
+	var b bool
+	var once bool
+	var itMemo Iterator
+	extractor := NewExtractor(connection)
+
+	for it := extractor.Extract(query); it.Next(&b); {
+		once = true
+		itMemo = it
 	}
-	actual := make([]model.Ticket, 0, len(expected))
-	for it := extractor.Extract(query); it.Next(&ticket); {
-		actual = append(actual, ticket)
-	}
-	if !reflect.DeepEqual(actual, expected) {
+	if !once || itMemo != iterator {
 		t.Errorf(
-			"NewJiraExtractor() expected: %v actual: %v",
-			expected, actual,
+			"TestExtractor() expected once, iterator: %v, %v, actual once, iterator: %v, %v",
+			true, once,
+			iterator, itMemo,
 		)
 	}
+}
 
+func TestMockServer(t *testing.T) {
+	// jiraClient, _ := jira.NewClient(c.s.Client(), c.s.URL)
+	// options := jira.SearchOptions{
+	// 	MaxResults: 3,
+	// 	Expand:     "changelog",
+	// }
+	// issues, _, _ := jiraClient.Issue.Search(jql, &options)
 }

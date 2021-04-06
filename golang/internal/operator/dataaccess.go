@@ -1,11 +1,12 @@
 package operator
 
-type Connection interface {
-	Execute() Iterator
+type Query interface {
+	Get(result interface{}) error
 }
-
-type Query interface{}
 
 type Iterator interface {
 	Next(v interface{}) bool
+}
+type Connection interface {
+	Execute(q Query) Iterator
 }
