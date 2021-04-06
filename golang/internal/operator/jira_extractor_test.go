@@ -6,8 +6,13 @@ import (
 	"strings"
 	"testing"
 
+	jira "gopkg.in/andygrunwald/go-jira.v1"
 	"local.dev/jira/internal/model"
 )
+
+func jqlFixture() string {
+	return "project=Test"
+}
 
 func ticketsFixture() []model.Ticket {
 	return []model.Ticket{
@@ -62,7 +67,7 @@ func (h *mockHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func newMockServer() *httptest.Server {
 	// http://localhost:8080/rest/api/2/search?jql=project=TEST
-	jql := "project=TEST"
+	jql := jqlFixture()
 	mux := http.NewServeMux()
 	mux.Handle("/rest/api/2/search", &mockHandler{jql})
 	mockServer := httptest.NewServer(mux)
@@ -125,10 +130,28 @@ func TestExtractor(t *testing.T) {
 }
 
 func TestMockServer(t *testing.T) {
-	// jiraClient, _ := jira.NewClient(c.s.Client(), c.s.URL)
-	// options := jira.SearchOptions{
-	// 	MaxResults: 3,
-	// 	Expand:     "changelog",
-	// }
-	// issues, _, _ := jiraClient.Issue.Search(jql, &options)
+	// GIVEN
+	jql := jqlFixture()
+	s := newMockServer()
+	jiraClient, _ := jira.NewClient(s.Client(), s.URL)
+	options := jira.SearchOptions{
+		MaxResults: 3,
+		Expand:     "changelog",
+	}
+
+	expectedNumber := 3
+	expectedKey := "TEST-26"
+	// WHEN
+	issues, _, _ := jiraClient.Issue.Search(jql, &options)
+	actualKey := issues[0].Key
+	actualNumber := len(issues)
+
+	// THEN
+	if actualNumber != expectedNumber || actualKey != expectedKey {
+		t.Errorf(
+			"TestMockServer: expected number: %v, key: %v, actual number: %v, key: %v",
+			expectedNumber, expectedKey,
+			actualNumber, actualKey,
+		)
+	}
 }
