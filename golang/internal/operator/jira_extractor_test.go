@@ -151,8 +151,6 @@ func TestMockServer(t *testing.T) {
 			"TestMockServer: expected: %v, actual: %v",
 			expected,
 			actual,
-			// expectedNumber, expectedKey,
-			// actualNumber, actualKey,
 		)
 	}
 }
