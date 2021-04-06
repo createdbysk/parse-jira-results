@@ -1,8 +1,26 @@
 package operator
 
-import "bytes"
+import (
+	"bytes"
+	"encoding/json"
 
-func jiraSearchResultsFixture() []byte {
+	jira "gopkg.in/andygrunwald/go-jira.v1"
+)
+
+func jiraSearchResultsIssuesFixture() []jira.Issue {
+	var m map[string]interface{}
+	var issues []jira.Issue
+	results := jiraSearchResultsJsonFixture()
+
+	// Extract the issues field out of the json
+	// Then convert that issues field into []jira.Issue.
+	json.Unmarshal(results, &m)
+	i, _ := json.Marshal(m["issues"])
+	json.Unmarshal(i, &issues)
+	return issues
+}
+
+func jiraSearchResultsJsonFixture() []byte {
 	response := bytes.NewBufferString(`{
 		"expand": "schema,names",
 		"startAt": 0,

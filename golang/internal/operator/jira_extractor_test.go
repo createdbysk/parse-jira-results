@@ -3,6 +3,7 @@ package operator
 import (
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -61,7 +62,7 @@ func (h *mockHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	jql := r.URL.Query()["jql"][0]
 	expand := r.URL.Query()["expand"][0]
 	if jql == h.jql && strings.ToLower(expand) == "changelog" {
-		w.Write(jiraSearchResultsFixture())
+		w.Write(jiraSearchResultsJsonFixture())
 	}
 }
 
@@ -139,19 +140,19 @@ func TestMockServer(t *testing.T) {
 		Expand:     "changelog",
 	}
 
-	expectedNumber := 3
-	expectedKey := "TEST-26"
+	expected := jiraSearchResultsIssuesFixture()
+
 	// WHEN
-	issues, _, _ := jiraClient.Issue.Search(jql, &options)
-	actualKey := issues[0].Key
-	actualNumber := len(issues)
+	actual, _, _ := jiraClient.Issue.Search(jql, &options)
 
 	// THEN
-	if actualNumber != expectedNumber || actualKey != expectedKey {
+	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf(
-			"TestMockServer: expected number: %v, key: %v, actual number: %v, key: %v",
-			expectedNumber, expectedKey,
-			actualNumber, actualKey,
+			"TestMockServer: expected: %v, actual: %v",
+			expected,
+			actual,
+			// expectedNumber, expectedKey,
+			// actualNumber, actualKey,
 		)
 	}
 }
