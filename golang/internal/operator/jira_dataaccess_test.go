@@ -8,49 +8,10 @@ import (
 	"testing"
 
 	jira "gopkg.in/andygrunwald/go-jira.v1"
-	"local.dev/jira/internal/model"
 )
 
 func jqlFixture() string {
 	return "project=Test"
-}
-
-func ticketsFixture() []model.Ticket {
-	return []model.Ticket{
-		{
-			"name":        "TEST-24",
-			"priority":    "4-Low",
-			"type":        "Task",
-			"status":      "TO DO",
-			"resolution":  "Unresolved",
-			"sprint":      "",
-			"createdDate": "2021-04-04T23:46:56Z",
-			"startDate":   "",
-			"endDate":     "",
-		},
-		{
-			"name":        "TEST-25",
-			"priority":    "3-Medium",
-			"type":        "Story",
-			"status":      "In Progress",
-			"resolution":  "Unresolved",
-			"sprint":      "",
-			"createdDate": "2021-04-04T23:47:13Z",
-			"startDate":   "2021-04-04T23:47:16Z",
-			"endDate":     "",
-		},
-		{
-			"name":        "TEST-26",
-			"priority":    "2-High",
-			"type":        "Task",
-			"status":      "Done",
-			"resolution":  "Done",
-			"sprint":      "",
-			"createdDate": "2021-04-04T23:47:26Z",
-			"startDate":   "2021-04-04T23:47:30Z",
-			"endDate":     "2021-04-04T23:47:35Z",
-		},
-	}
 }
 
 type mockHandler struct {
