@@ -10,7 +10,8 @@ import (
 )
 
 func main() {
-	jiraContext, err := config.NewJiraContext()
+	jiraContextDependencies := config.NewJiraContextDependencies()
+	jiraContext, err := config.NewJiraContext(jiraContextDependencies, os.Args[1:])
 
 	if err != nil {
 		log.Fatal(err)

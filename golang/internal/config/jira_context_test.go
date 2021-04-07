@@ -11,75 +11,48 @@ import (
 	"local.dev/jira/internal/operator"
 )
 
-// func TestparseJiraCommandLineParser(t *testing.T) {
-// 	// GIVEN
-// 	testcases := []struct {
-// 		name     string
-// 		args     []string
-// 		params   jiraCommandlineParams
-// 		hasError bool
-// 	}{
-// 		{
-// 			"Default MaxResults",
-// 			[]string{
-// 				"test.tpl",
-// 				"project=TEST",
-// 			},
-// 			jiraCommandlineParams{
-// 				MaxResults:       defaultMaxResults,
-// 				TemplateFilename: "test.tpl",
-// 				JQL:              "project=TEST",
-// 			},
-// 			false,
-// 		},
-// 		{
-// 			"MaxResults=3",
-// 			[]string{
-// 				"-maxResults",
-// 				"3",
-// 				"test.tpl",
-// 				"project=TEST",
-// 			},
-// 			jiraCommandlineParams{
-// 				MaxResults:       3,
-// 				TemplateFilename: "test.tpl",
-// 				JQL:              "project=TEST",
-// 			},
-// 			false,
-// 		},
-// 	}
+func TestNewJiraBasicAuth(t *testing.T) {
+	// GIVEN
+	username := "username"
+	password := "password"
 
-// 	for _, testcase := range testcases {
-// 		t.Run(
-// 			testcase.name,
-// 			func(t *testing.T) {
-// 				// GIVEN
-// 				// testcase
-// 				expected := map[string]interface{}{
-// 					"params":   testcase.params,
-// 					"hasError": testcase.hasError,
-// 				}
+	// WHEN
+	client := NewJiraBasicAuth(username, password)
 
-// 				// WHEN
-// 				params, err := parsejiraCommandlineParams(testcase.args)
-// 				actual := map[string]interface{}{
-// 					"params":   *params,
-// 					"hasError": err != nil,
-// 				}
-// 				// THEN
+	// THEN
+	if client == nil {
+		t.Errorf("NewBasicAuth() did not return valid http client.")
+	}
+}
 
-// 				if !reflect.DeepEqual(actual, expected) {
-// 					t.Errorf(
-// 						"%v: expected %v, actual %v",
-// 						testcase.name,
-// 						expected,
-// 						actual,
-// 					)
-// 				}
-// 			},
-// 		)
-// 	}
-// }
+func TestNewJiraContextDependencies(t *testing.T) {
+	// GIVEN
+	expected := JiraContextDependencies{
+		&jiraBasicAuthFactory,
+		&jiraConnectionFactory,
+		&readFile,
+		&jiraQueryFactory,
+		&templateRendererFactory,
+	}
+
+	// WHEN
+	actual := *NewJiraContextDependencies()
+
+	// THEN
+	// if actual.NewHttpClient != expected.NewHttpClient ||
+	// 	actual.NewJiraConnection != expected.NewJiraConnection ||
+	// 	actual.ReadFile != expected.ReadFile ||
+	// 	actual.NewJiraQuery != expected.NewJiraQueryactual ||
+	// 	actual.NewTemplateRenderer != expected.NewTemplateRenderer {
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf(
+			"%v test: expected %v, actual %v",
+			"NewJiraContextDependencies()",
+			expected,
+			actual,
+		)
+	}
+}
 
 func TestNewJiraContext(t *testing.T) {
 	// GIVEN
@@ -97,43 +70,49 @@ func TestNewJiraContext(t *testing.T) {
 	query := &operator.MockQuery{}
 	renderer := &operator.MockRenderer{}
 	connection := &operator.MockConnection{}
+	mockClientFactory := func(username string, password string) *http.Client {
+		if username == envVars["JIRA_USER"] && password == envVars["JIRA_PASSWORD"] {
+			return client
+		} else {
+			return nil
+		}
+	}
+	mockConnectionFactory := func(c *http.Client, url string, m int) operator.Connection {
+		if c == client && url == envVars["JIRA_URL"] {
+			maxResults = m
+			return connection
+		} else {
+			return nil
+		}
+	}
+	mockReadFile := func(f string) ([]byte, error) {
+		if f == filename {
+			return bytes.NewBufferString(templateText).Bytes(), nil
+		} else {
+			return nil, errors.New("Invalid filename")
+		}
+	}
+	mockQueryFactory := func(q string) operator.Query {
+		if q == jql {
+			return query
+		} else {
+			return nil
+		}
+	}
+	mockRendererFactory := func(text string) operator.Renderer {
+		if text == templateText {
+			return renderer
+		} else {
+			return nil
+		}
+	}
+
 	di := &JiraContextDependencies{
-		func(username string, password string) *http.Client {
-			if username == envVars["JIRA_USER"] && password == envVars["JIRA_PASSWORD"] {
-				return client
-			} else {
-				return nil
-			}
-		},
-		func(c *http.Client, url string, m int) operator.Connection {
-			if c == client && url == envVars["JIRA_URL"] {
-				maxResults = m
-				return connection
-			} else {
-				return nil
-			}
-		},
-		func(f string) ([]byte, error) {
-			if f == filename {
-				return bytes.NewBufferString(templateText).Bytes(), nil
-			} else {
-				return nil, errors.New("Invalid filename")
-			}
-		},
-		func(q string) operator.Query {
-			if q == jql {
-				return query
-			} else {
-				return nil
-			}
-		},
-		func(text string) operator.Renderer {
-			if text == templateText {
-				return renderer
-			} else {
-				return nil
-			}
-		},
+		&mockClientFactory,
+		&mockConnectionFactory,
+		&mockReadFile,
+		&mockQueryFactory,
+		&mockRendererFactory,
 	}
 
 	testcases := []struct {
