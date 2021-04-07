@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"io/ioutil"
+	"log"
 	"os"
 
 	"local.dev/jira/internal/operator"
@@ -28,6 +29,7 @@ func NewJiraContext() (*JiraContext, error) {
 
 	var maxResults int
 	flag.IntVar(&maxResults, "maxResults", 500, "Maximum number of results to return.")
+	log.Printf("MaxResults: %v", maxResults)
 
 	flag.Parse()
 
