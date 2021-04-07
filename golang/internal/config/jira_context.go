@@ -3,14 +3,45 @@ package config
 import (
 	"errors"
 	"flag"
-	"io/ioutil"
-	"log"
+	"net/http"
 	"os"
 
 	"local.dev/jira/internal/operator"
-
-	jira "gopkg.in/andygrunwald/go-jira.v1"
 )
+
+const (
+	defaultMaxResults = 500
+)
+
+type jiraCommandlineParams struct {
+	MaxResults       int
+	TemplateFilename string
+	JQL              string
+}
+
+func parseJiraCommandlineArgs(args []string) (*jiraCommandlineParams, error) {
+	var params jiraCommandlineParams
+	flagSet := flag.NewFlagSet("", flag.ContinueOnError)
+	flagSet.IntVar(&params.MaxResults, "maxResults", defaultMaxResults, "Maximum number of results to return.")
+
+	flagSet.Parse(args)
+	if flagSet.NArg() < 2 {
+		return nil, errors.New("must provide template filename AND JQL")
+	}
+
+	params.TemplateFilename = flagSet.Arg(0)
+	params.JQL = flagSet.Arg(1)
+
+	return &params, nil
+}
+
+type JiraContextDependencies struct {
+	NewHttpClient       func(username string, password string) *http.Client
+	NewJiraConnection   func(client *http.Client, url string, maxResults int) operator.Connection
+	ReadFile            func(filename string) ([]byte, error)
+	NewJiraQuery        func(jql string) operator.Query
+	NewTemplateRenderer func(text string) operator.Renderer
+}
 
 type JiraContext struct {
 	Connection operator.Connection
@@ -18,7 +49,7 @@ type JiraContext struct {
 	Renderer   operator.Renderer
 }
 
-func NewJiraContext() (*JiraContext, error) {
+func NewJiraContext(di *JiraContextDependencies, args []string) (*JiraContext, error) {
 	url := os.Getenv("JIRA_URL")
 	username := os.Getenv("JIRA_USER")
 	password := os.Getenv("JIRA_PASSWORD")
@@ -27,39 +58,29 @@ func NewJiraContext() (*JiraContext, error) {
 		return nil, errors.New("require JIRA_URL, JIRA_USER, and JIRA_PASSWORD environment variales")
 	}
 
-	var maxResults int
-	flag.IntVar(&maxResults, "maxResults", 500, "Maximum number of results to return.")
-	log.Printf("MaxResults: %v", maxResults)
+	commandlineArgs, err := parseJiraCommandlineArgs(args)
 
-	flag.Parse()
-
-	if flag.NArg() < 2 {
-		return nil, errors.New("must provide template filename AND JQL")
+	if err != nil {
+		return nil, err
 	}
 
-	tp := jira.BasicAuthTransport{
-		Username: username,
-		Password: password,
-	}
+	client := di.NewHttpClient(username, password)
 
-	filename := flag.Arg(0)
-	contents, err := ioutil.ReadFile(filename)
+	contents, err := di.ReadFile(commandlineArgs.TemplateFilename)
 	if err != nil {
 		return nil, err
 	}
 
 	templateText := string(contents)
-	renderer := operator.NewTemplateRenderer(templateText)
+	renderer := di.NewTemplateRenderer(templateText)
 
-	connection := operator.NewJiraConnection(
-		tp.Client(),
+	connection := di.NewJiraConnection(
+		client,
 		url,
-		maxResults,
+		commandlineArgs.MaxResults,
 	)
 
-	jql := flag.Arg(1)
-
-	query := operator.NewJiraQuery(jql)
+	query := di.NewJiraQuery(commandlineArgs.JQL)
 
 	return &JiraContext{
 		Connection: connection,
