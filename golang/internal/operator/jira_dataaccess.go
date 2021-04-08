@@ -13,7 +13,7 @@ type connection struct {
 
 func NewJiraConnection(client *http.Client, url string, maxResults int) Connection {
 	options := jira.SearchOptions{
-		MaxResults: 3,
+		MaxResults: maxResults,
 		Expand:     "changelog",
 	}
 	jiraClient, _ := jira.NewClient(client, url)

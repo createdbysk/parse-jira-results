@@ -19,7 +19,7 @@ func TestRender(t *testing.T) {
 	// GIVEN
 	pattern := patternFixture()
 	renderer := NewTemplateRenderer(pattern)
-	issues := jiraSearchResultsIssuesFixture()
+	issues := jiraSearchResultsIssuesFixture(3)
 
 	expected := `|Name|Type|
 |TEST-26|Task|

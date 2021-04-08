@@ -79,11 +79,11 @@ func NewJiraContextDependencies() *JiraContextDependencies {
 
 func NewJiraContext(di *JiraContextDependencies, args []string) (*JiraContext, error) {
 	url := os.Getenv("JIRA_URL")
-	username := os.Getenv("JIRA_USER")
+	username := os.Getenv("JIRA_USERNAME")
 	password := os.Getenv("JIRA_PASSWORD")
 
 	if url == "" || username == "" || password == "" {
-		return nil, errors.New("require JIRA_URL, JIRA_USER, and JIRA_PASSWORD environment variales")
+		return nil, errors.New("require JIRA_URL, JIRA_USERNAME, and JIRA_PASSWORD environment variales")
 	}
 
 	commandlineArgs, err := parseJiraCommandlineArgs(args)

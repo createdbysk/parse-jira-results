@@ -7,10 +7,10 @@ import (
 	jira "gopkg.in/andygrunwald/go-jira.v1"
 )
 
-func jiraSearchResultsIssuesFixture() []jira.Issue {
+func jiraSearchResultsIssuesFixture(maxResults int) []jira.Issue {
 	var m map[string]interface{}
 	var issues []jira.Issue
-	results := jiraSearchResultsJsonFixture()
+	results := jiraSearchResultsJsonFixture(maxResults)
 
 	// Extract the issues field out of the json
 	// Then convert that issues field into []jira.Issue.
@@ -20,8 +20,20 @@ func jiraSearchResultsIssuesFixture() []jira.Issue {
 	return issues
 }
 
-func jiraSearchResultsJsonFixture() []byte {
-	response := bytes.NewBufferString(`{
+func jiraSearchResultsJsonFixture(maxResults int) []byte {
+	// Extract the issues field out of the json
+	// Get maxResults number of items from that slice.
+	// Marshal it back to json with maxResults issues.
+	var m map[string]interface{}
+	results := jiraAllResultsJsonFixture()
+	json.Unmarshal(results, &m)
+	m["issues"] = m["issues"].([]interface{})[:maxResults]
+	response, _ := json.Marshal(m)
+	return response
+}
+
+func jiraAllResultsJsonFixture() []byte {
+	return bytes.NewBufferString(`{
 		"expand": "schema,names",
 		"startAt": 0,
 		"maxResults": 3,
@@ -948,5 +960,4 @@ func jiraSearchResultsJsonFixture() []byte {
 			}
 		]
 	}`).Bytes()
-	return response
 }

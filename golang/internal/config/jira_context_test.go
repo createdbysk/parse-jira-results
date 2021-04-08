@@ -59,7 +59,7 @@ func TestNewJiraContext(t *testing.T) {
 	var maxResults int
 	envVars := map[string]string{
 		"JIRA_URL":      "http://jira",
-		"JIRA_USER":     "user",
+		"JIRA_USERNAME": "user",
 		"JIRA_PASSWORD": "password",
 	}
 
@@ -71,7 +71,7 @@ func TestNewJiraContext(t *testing.T) {
 	renderer := &operator.MockRenderer{}
 	connection := &operator.MockConnection{}
 	mockClientFactory := func(username string, password string) *http.Client {
-		if username == envVars["JIRA_USER"] && password == envVars["JIRA_PASSWORD"] {
+		if username == envVars["JIRA_USERNAME"] && password == envVars["JIRA_PASSWORD"] {
 			return client
 		} else {
 			return nil
