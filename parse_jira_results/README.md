@@ -2,6 +2,16 @@ Implements the ability to parse the results from the JIRA rest API queries.
 
 # Usage
 
+## Golang
+
+### Test with Local JIRA
+#### First time
+
+        make run-jira
+#### Subsequent times
+
+        make start-jira
+
 ## Overwrite JIRA metrics in google spreadsheet
 You can use a docker container to run this application.
 
