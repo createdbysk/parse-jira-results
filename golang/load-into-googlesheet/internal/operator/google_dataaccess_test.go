@@ -7,7 +7,9 @@ import (
 	"reflect"
 	"testing"
 
+	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
+	"local.dev/sheetsLoader/internal/testutils"
 )
 
 type mockHttpClientFactoryGetter struct {
@@ -29,20 +31,23 @@ func (c *mockHttpClientFactoryGetter) httpClientFactory(ctx context.Context) *ht
 type mockConfigFactory struct {
 	mockJWTConfig   *jwt.Config
 	credentialsJSON string
-	scope           string
+	scopes          []string
 }
 
-func (params *mockConfigFactory) create(credentials []byte, scope string) *jwt.Config {
+func (params *mockConfigFactory) create(credentials []byte, scope ...string) (*jwt.Config, error) {
 	params.credentialsJSON = string(credentials)
-	params.scope = scope
-	return params.mockJWTConfig
+	params.scopes = scope
+	return params.mockJWTConfig, nil
 }
 
 func TestNewGoogleConnection(t *testing.T) {
 	// GIVEN
 	credentialsJSON := `{"fake": "Credentials"}`
 	credentials := bytes.NewBufferString(credentialsJSON).Bytes()
-	scope := "http://www.testscope.com/test"
+	scope := []string{
+		"http://www.testscope.com/test1",
+		"http://www.testscope.com/test2",
+	}
 	jwtConfig := jwt.Config{}
 	httpClient := &http.Client{}
 	httpClientFactoryGetter := &mockHttpClientFactoryGetter{mockHttpClient: httpClient}
@@ -65,13 +70,13 @@ func TestNewGoogleConnection(t *testing.T) {
 	}
 
 	// WHEN
-	cn, err := NewGoogleConnection(&context, credentials, scope)
+	cn, err := NewGoogleConnection(&context, credentials, scope...)
 	if err != nil {
 		t.Fatalf("TestGoogleDataAccess: Error %v", err)
 	}
 	actual := map[string]interface{}{
 		"credentialsJSON": configFactory.credentialsJSON,
-		"scope":           configFactory.scope,
+		"scope":           configFactory.scopes,
 		"called":          httpClientFactoryGetter.called,
 		"ctx":             httpClientFactoryGetter.ctx,
 		"http.Client":     cn.(*connection).client,
@@ -80,6 +85,38 @@ func TestNewGoogleConnection(t *testing.T) {
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf(
 			"TestGoogleDataAccess: expected %v, actual %v",
+			expected,
+			actual,
+		)
+	}
+}
+
+func TestGoogleContext(t *testing.T) {
+	// GIVEN
+	jwtConfigFactoryPtr := testutils.GetFnPtr(google.JWTConfigFromJSON)
+	getHttpClientFactoryFnPtr := testutils.GetFnPtr(GetHttpClientFactory)
+	ctx := context.Background()
+
+	expected := map[string]interface{}{
+		"ConfigFactory":        jwtConfigFactoryPtr,
+		"GetHttpClientFactory": getHttpClientFactoryFnPtr,
+		"ctx":                  ctx,
+	}
+
+	// WHEN
+	googleContext := NewGoogleContext()
+
+	actual := map[string]interface{}{
+		"ConfigFactory": testutils.GetFnPtr(googleContext.ConfigFactory),
+
+		"GetHttpClientFactory": testutils.GetFnPtr(googleContext.GetHttpClientFactory),
+		"ctx":                  googleContext.Context,
+	}
+
+	// THEN
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf(
+			"TestGoogleContext: expected: %v, actual %v",
 			expected,
 			actual,
 		)
