@@ -28,7 +28,7 @@ type GoogleContext struct {
 func NewGoogleContext() *GoogleContext {
 	return &GoogleContext{
 		ConfigFactory:        google.JWTConfigFromJSON,
-		GetHttpClientFactory: GetHttpClientFactory,
+		GetHttpClientFactory: getHttpClientFactory,
 		Context:              context.Background(),
 	}
 }
@@ -53,7 +53,7 @@ func (c *connection) Get(impl interface{}) {
 	panic(err)
 }
 
-func GetHttpClientFactory(config *jwt.Config) HttpClientFactory {
+func getHttpClientFactory(config *jwt.Config) HttpClientFactory {
 	err := errors.New("not implemented")
 	panic(err)
 	return nil

@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"context"
 	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
 
+	"github.com/gorilla/mux"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
+	"google.golang.org/api/sheets/v4"
 	"local.dev/sheetsLoader/internal/testutils"
 )
 
@@ -94,7 +97,7 @@ func TestNewGoogleConnection(t *testing.T) {
 func TestGoogleContext(t *testing.T) {
 	// GIVEN
 	jwtConfigFactoryPtr := testutils.GetFnPtr(google.JWTConfigFromJSON)
-	getHttpClientFactoryFnPtr := testutils.GetFnPtr(GetHttpClientFactory)
+	getHttpClientFactoryFnPtr := testutils.GetFnPtr(getHttpClientFactory)
 	ctx := context.Background()
 
 	expected := map[string]interface{}{
@@ -121,4 +124,57 @@ func TestGoogleContext(t *testing.T) {
 			actual,
 		)
 	}
+}
+
+type mockSpreadsheetsHandler struct {
+	spreadsheetId string
+	shts          []*sheets.Sheet
+}
+
+func spreadsheetIdFixture() string {
+	return "spreadsheetId"
+}
+
+func (h *mockSpreadsheetsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}
+	vars := mux.Vars(r)
+	spreadsheetId := vars["spreadsheetId"]
+	if spreadsheetId == h.spreadsheetId {
+		sheets.Spreadsheet{
+			SpreadsheetId: spreadsheetId,
+		}
+	}
+}
+
+func newMockServer() *httptest.Server {
+	spreadsheetId := spreadsheetIdFixture()
+	router := mux.NewRouter()
+	shts := []*sheets.Sheets{
+		&sheets.Sheet{
+			Properties: &sheets.Properties{
+				Title:   "TAB1",
+				SheetId: "SHEETID1",
+			},
+		},
+		&sheets.Sheet{
+			Properties: &sheets.Properties{
+				Title:   "TAB2",
+				SheetId: "SHEETID2",
+			},
+		},
+	}
+	spreadsheetsHandler := &mockSpreadsheetsHandler{
+		spreadsheetId: spreadsheetId,
+		shts:          shts,
+	}
+	// https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}
+	router.Handle("/v4/spreadsheets/{spreadsheetId}", spreadsheetsHandler)
+	mockServer := httptest.NewServer(router)
+	return mockServer
+}
+
+func TestGoogleSheetOutput(t *testing.T) {
+	// GIVEN
+	httpClient := &http.Client{}
+
 }
