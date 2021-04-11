@@ -2,61 +2,79 @@ package operator
 
 import (
 	"bytes"
+	"context"
 	"net/http"
 	"reflect"
 	"testing"
+
+	"golang.org/x/oauth2/jwt"
 )
 
-type mockClientFactory struct {
-	called     bool
-	mockClient *http.Client
+type mockHttpClientFactoryGetter struct {
+	called         bool
+	ctx            context.Context
+	mockHttpClient *http.Client
 }
 
-func (config *mockClientFactory) Client() *http.Client {
-	mockClientFactory.called = true
-	return config.mockClient
+func (c *mockHttpClientFactoryGetter) get(config *jwt.Config) HttpClientFactory {
+	c.called = true
+	return c.httpClientFactory
 }
 
-type mockClientFactoryParameters struct {
-	mockConfig      *mockClientFactory
+func (c *mockHttpClientFactoryGetter) httpClientFactory(ctx context.Context) *http.Client {
+	c.ctx = ctx
+	return c.mockHttpClient
+}
+
+type mockConfigFactory struct {
+	mockJWTConfig   *jwt.Config
 	credentialsJSON string
 	scope           string
 }
 
-func (params *mockClientFactoryParameters) create(credentials []byte, scope string) googleClientFactory {
+func (params *mockConfigFactory) create(credentials []byte, scope string) *jwt.Config {
 	params.credentialsJSON = string(credentials)
 	params.scope = scope
-	return params.mockConfig
+	return params.mockJWTConfig
 }
 
-func TestGoogleDataAccess(t *testing.T) {
+func TestNewGoogleConnection(t *testing.T) {
 	// GIVEN
 	credentialsJSON := `{"fake": "Credentials"}`
 	credentials := bytes.NewBufferString(credentialsJSON).Bytes()
 	scope := "http://www.testscope.com/test"
-	mockClient := http.DefaultClient
-	mockFactory := mockClientFactory{mockClient: mockClient}
-	factoryParams := &mockClientFactoryParameters{
-		mockConfig: &mockFactory,
+	jwtConfig := jwt.Config{}
+	httpClient := &http.Client{}
+	httpClientFactoryGetter := &mockHttpClientFactoryGetter{mockHttpClient: httpClient}
+	ctx := context.TODO()
+	configFactory := &mockConfigFactory{
+		mockJWTConfig: &jwtConfig,
 	}
 	context := GoogleContext{
-		GoogleClientFactoryFactory: factoryParams.create,
+		ConfigFactory:        configFactory.create,
+		GetHttpClientFactory: httpClientFactoryGetter.get,
+		Context:              ctx,
 	}
 
 	expected := map[string]interface{}{
 		"credentialsJSON": credentialsJSON,
 		"scope":           scope,
 		"called":          true,
-		"client":          mockClient,
+		"ctx":             ctx,
+		"http.Client":     httpClient,
 	}
 
 	// WHEN
-	connection := NewGoogleConnection(&context)
+	cn, err := NewGoogleConnection(&context, credentials, scope)
+	if err != nil {
+		t.Fatalf("TestGoogleDataAccess: Error %v", err)
+	}
 	actual := map[string]interface{}{
-		"credentialsJSON": factoryParams.credentialsJSON,
-		"scope":           factoryParams.scope,
-		"called":          mockFactory.called,
-		"client":          mockFactory.mockClient,
+		"credentialsJSON": configFactory.credentialsJSON,
+		"scope":           configFactory.scope,
+		"called":          httpClientFactoryGetter.called,
+		"ctx":             httpClientFactoryGetter.ctx,
+		"http.Client":     cn.(*connection).client,
 	}
 	// THEN
 	if !reflect.DeepEqual(actual, expected) {
