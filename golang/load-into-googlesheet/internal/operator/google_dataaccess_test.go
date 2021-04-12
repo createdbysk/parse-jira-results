@@ -3,6 +3,8 @@ package operator
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -135,34 +137,56 @@ func spreadsheetIdFixture() string {
 	return "spreadsheetId"
 }
 
+func sheetTitleFixture(index int64) string {
+	return fmt.Sprintf("TAB%d", index)
+}
+
+func sheetIdFixture(index int64) int64 {
+	return index
+}
+
+func sheetPropertiesFixture(index int64) *sheets.SheetProperties {
+	properties := sheets.SheetProperties{
+		Title:   sheetTitleFixture(index),
+		SheetId: sheetIdFixture(index),
+	}
+	return &properties
+}
+
+func sheetsFixture() []*sheets.Sheet {
+	return []*sheets.Sheet{
+		&sheets.Sheet{
+			Properties: sheetPropertiesFixture(1),
+		},
+		&sheets.Sheet{
+			Properties: sheetPropertiesFixture(2),
+		},
+	}
+}
+
+func spreadsheetFixture() *sheets.Spreadsheet {
+	shts := sheetsFixture()
+	spreadsheet := &sheets.Spreadsheet{
+		Sheets: shts,
+	}
+	return spreadsheet
+}
+
 func (h *mockSpreadsheetsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}
 	vars := mux.Vars(r)
 	spreadsheetId := vars["spreadsheetId"]
 	if spreadsheetId == h.spreadsheetId {
-		sheets.Spreadsheet{
-			SpreadsheetId: spreadsheetId,
-		}
+		spreadsheet := spreadsheetFixture()
+		response, _ := json.Marshal(spreadsheet)
+		w.Write(response)
 	}
 }
 
-func newMockServer() *httptest.Server {
+func mockServerFixture() *httptest.Server {
 	spreadsheetId := spreadsheetIdFixture()
 	router := mux.NewRouter()
-	shts := []*sheets.Sheets{
-		&sheets.Sheet{
-			Properties: &sheets.Properties{
-				Title:   "TAB1",
-				SheetId: "SHEETID1",
-			},
-		},
-		&sheets.Sheet{
-			Properties: &sheets.Properties{
-				Title:   "TAB2",
-				SheetId: "SHEETID2",
-			},
-		},
-	}
+	shts := sheetsFixture()
 	spreadsheetsHandler := &mockSpreadsheetsHandler{
 		spreadsheetId: spreadsheetId,
 		shts:          shts,
@@ -175,6 +199,31 @@ func newMockServer() *httptest.Server {
 
 func TestGoogleSheetOutput(t *testing.T) {
 	// GIVEN
-	httpClient := &http.Client{}
+	mockServer := mockServerFixture()
+	client := mockServer.Client()
+	sheetNumber := int64(1)
+	spreadsheetId := spreadsheetIdFixture()
 
+	// WHEN
+	srv, err := sheets.New(client)
+	srv.BasePath = mockServer.URL
+	if err != nil {
+		t.Fatal(err)
+	}
+	spreadsheetsGetCall := srv.Spreadsheets.Get(spreadsheetId)
+	spreadsheet, err := spreadsheetsGetCall.Context(context.Background()).Do()
+	if err != nil {
+		t.Fatalf("Unable to get spreadsheets: %v", err)
+	}
+	var sheetId int64
+	sheetId = -1
+	for _, s := range spreadsheet.Sheets {
+		if s.Properties.Title == sheetTitleFixture(sheetNumber) {
+			sheetId = s.Properties.SheetId
+			break
+		}
+	}
+	if sheetId == -1 {
+		t.Fatalf(`Sheet ${sheetName} not found`)
+	}
 }
