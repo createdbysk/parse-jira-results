@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -128,11 +129,6 @@ func TestGoogleContext(t *testing.T) {
 	}
 }
 
-type mockSpreadsheetsHandler struct {
-	spreadsheetId string
-	shts          []*sheets.Sheet
-}
-
 func spreadsheetIdFixture() string {
 	return "spreadsheetId"
 }
@@ -172,27 +168,57 @@ func spreadsheetFixture() *sheets.Spreadsheet {
 	return spreadsheet
 }
 
+func dataFixture() string {
+	return "Hello|World"
+}
+
+func gridCoordinateFixture(index int64) *sheets.GridCoordinate {
+	sheetId := sheetIdFixture(index)
+	return &sheets.GridCoordinate{
+		SheetId:     sheetId,
+		ColumnIndex: 0,
+		RowIndex:    0,
+	}
+}
+
+type mockSpreadsheetsHandler struct{}
+
 func (h *mockSpreadsheetsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}
 	vars := mux.Vars(r)
 	spreadsheetId := vars["spreadsheetId"]
-	if spreadsheetId == h.spreadsheetId {
+	if spreadsheetId == spreadsheetIdFixture() {
 		spreadsheet := spreadsheetFixture()
-		response, _ := json.Marshal(spreadsheet)
-		w.Write(response)
+		json.NewEncoder(w).Encode(spreadsheet)
+	}
+}
+
+type mockBatchUpdateHandler struct {
+	request sheets.BatchUpdateSpreadsheetRequest
+}
+
+func (h *mockBatchUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}:batchUpda
+	vars := mux.Vars(r)
+	spreadsheetId := vars["spreadsheetId"]
+	if spreadsheetId == spreadsheetIdFixture() {
+		err := json.NewDecoder(r.Body).Decode(&h.request)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+		} else {
+			w.WriteHeader(http.StatusCreated)
+		}
 	}
 }
 
 func mockServerFixture() *httptest.Server {
-	spreadsheetId := spreadsheetIdFixture()
 	router := mux.NewRouter()
-	shts := sheetsFixture()
-	spreadsheetsHandler := &mockSpreadsheetsHandler{
-		spreadsheetId: spreadsheetId,
-		shts:          shts,
-	}
 	// https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}
+	spreadsheetsHandler := &mockSpreadsheetsHandler{}
 	router.Handle("/v4/spreadsheets/{spreadsheetId}", spreadsheetsHandler)
+	batchUpdateHandler := &mockBatchUpdateHandler{}
+	// https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}:batchUpdate
+	router.Handle("/v4/spreadsheets/{spreadsheetId}:batchUpdate", batchUpdateHandler)
 	mockServer := httptest.NewServer(router)
 	return mockServer
 }
@@ -206,6 +232,7 @@ func TestGoogleSheetOutput(t *testing.T) {
 
 	// WHEN
 	srv, err := sheets.New(client)
+	// Update the basepath to use the mock url.
 	srv.BasePath = mockServer.URL
 	if err != nil {
 		t.Fatal(err)
@@ -225,5 +252,30 @@ func TestGoogleSheetOutput(t *testing.T) {
 	}
 	if sheetId == -1 {
 		t.Fatalf(`Sheet ${sheetName} not found`)
+	}
+	data := dataFixture()
+	gridCoordinate := gridCoordinateFixture(sheetNumber)
+	pasteDataRequest := sheets.PasteDataRequest{
+		Coordinate: gridCoordinate,
+		Data:       data,
+		Delimiter:  "|",
+		Type:       "PASTE_NORMAL",
+	}
+	request := sheets.Request{
+		PasteData: &pasteDataRequest,
+	}
+
+	batchUpdateSpreadsheetRequest := sheets.BatchUpdateSpreadsheetRequest{
+		Requests: []*sheets.Request{
+			&request,
+		},
+	}
+	call := srv.Spreadsheets.BatchUpdate(
+		spreadsheetId,
+		&batchUpdateSpreadsheetRequest,
+	)
+	_, err = call.Context(context.Background()).Do()
+	if err != nil {
+		log.Fatalf("Unable to store data in sheet: %v", err)
 	}
 }
