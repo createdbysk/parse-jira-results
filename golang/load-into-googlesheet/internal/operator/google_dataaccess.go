@@ -7,6 +7,7 @@ import (
 
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
+	"google.golang.org/api/sheets/v4"
 )
 
 // JWTConfigFactory is the type for the function that returns a *jwt.Config.
@@ -18,10 +19,14 @@ type HttpClientFactoryGetter func(config *jwt.Config) HttpClientFactory
 // HttpClientFactory is the type for a function that returns *http.Client.
 type HttpClientFactory func(ctx context.Context) *http.Client
 
+// SheetsServiceFactory is the type for a function that creates the sheets.Service.
+type SheetsServiceFactory func(client *http.Client) (*sheets.Service, error)
+
 // GoogleContext is the a context abstraction for Google APIs.
 type GoogleContext struct {
 	ConfigFactory        JWTConfigFactory
 	GetHttpClientFactory HttpClientFactoryGetter
+	ServiceFactory       SheetsServiceFactory
 	Context              context.Context
 }
 
@@ -34,17 +39,21 @@ func NewGoogleContext() *GoogleContext {
 }
 
 type connection struct {
-	client *http.Client
+	srv *sheets.Service
 }
 
-func NewGoogleConnection(googleCtx *GoogleContext, credentials []byte, scope ...string) (Connection, error) {
+func NewGoogleSheetsConnection(googleCtx *GoogleContext, credentials []byte, scope ...string) (Connection, error) {
 	config, err := googleCtx.ConfigFactory(credentials, scope...)
 	if err != nil {
 		return nil, err
 	}
 	httpClientFactory := googleCtx.GetHttpClientFactory(config)
 	httpClient := httpClientFactory(googleCtx.Context)
-	c := &connection{httpClient}
+	srv, err := googleCtx.ServiceFactory(httpClient)
+	if err != nil {
+		return nil, err
+	}
+	c := &connection{srv}
 	return c, nil
 }
 

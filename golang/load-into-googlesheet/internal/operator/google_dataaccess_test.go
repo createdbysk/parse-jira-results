@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,35 +19,40 @@ import (
 	"local.dev/sheetsLoader/internal/testutils"
 )
 
-type mockHttpClientFactoryGetter struct {
-	called         bool
-	ctx            context.Context
-	mockHttpClient *http.Client
+type mockFactory struct {
+	mockJWTConfig              *jwt.Config
+	credentialsJSON            string
+	scopes                     []string
+	getHttpClientFactoryCalled bool
+	ctx                        context.Context
+	mockHttpClient             *http.Client
+	mockSheetsService          *sheets.Service
 }
 
-func (c *mockHttpClientFactoryGetter) get(config *jwt.Config) HttpClientFactory {
-	c.called = true
-	return c.httpClientFactory
-}
-
-func (c *mockHttpClientFactoryGetter) httpClientFactory(ctx context.Context) *http.Client {
-	c.ctx = ctx
-	return c.mockHttpClient
-}
-
-type mockConfigFactory struct {
-	mockJWTConfig   *jwt.Config
-	credentialsJSON string
-	scopes          []string
-}
-
-func (params *mockConfigFactory) create(credentials []byte, scope ...string) (*jwt.Config, error) {
+func (params *mockFactory) createConfig(credentials []byte, scope ...string) (*jwt.Config, error) {
 	params.credentialsJSON = string(credentials)
 	params.scopes = scope
 	return params.mockJWTConfig, nil
 }
 
-func TestNewGoogleConnection(t *testing.T) {
+func (c *mockFactory) getHttpClientFactory(config *jwt.Config) HttpClientFactory {
+	c.getHttpClientFactoryCalled = true
+	return c.httpClientFactory
+}
+
+func (c *mockFactory) httpClientFactory(ctx context.Context) *http.Client {
+	c.ctx = ctx
+	return c.mockHttpClient
+}
+
+func (c *mockFactory) createService(client *http.Client) (*sheets.Service, error) {
+	if client != c.mockHttpClient {
+		return nil, errors.New("Invalid http client parameter.")
+	}
+	return c.mockSheetsService, nil
+}
+
+func TestNewGoogleSheetsConnection(t *testing.T) {
 	// GIVEN
 	credentialsJSON := `{"fake": "Credentials"}`
 	credentials := bytes.NewBufferString(credentialsJSON).Bytes()
@@ -56,36 +62,39 @@ func TestNewGoogleConnection(t *testing.T) {
 	}
 	jwtConfig := jwt.Config{}
 	httpClient := &http.Client{}
-	httpClientFactoryGetter := &mockHttpClientFactoryGetter{mockHttpClient: httpClient}
+	sheetsService := &sheets.Service{}
 	ctx := context.TODO()
-	configFactory := &mockConfigFactory{
-		mockJWTConfig: &jwtConfig,
+	factory := &mockFactory{
+		mockJWTConfig:     &jwtConfig,
+		mockHttpClient:    httpClient,
+		mockSheetsService: sheetsService,
 	}
 	context := GoogleContext{
-		ConfigFactory:        configFactory.create,
-		GetHttpClientFactory: httpClientFactoryGetter.get,
+		ConfigFactory:        factory.createConfig,
+		GetHttpClientFactory: factory.getHttpClientFactory,
+		ServiceFactory:       factory.createService,
 		Context:              ctx,
 	}
 
 	expected := map[string]interface{}{
-		"credentialsJSON": credentialsJSON,
-		"scope":           scope,
-		"called":          true,
-		"ctx":             ctx,
-		"http.Client":     httpClient,
+		"credentialsJSON":            credentialsJSON,
+		"scope":                      scope,
+		"getHttpClientFactoryCalled": true,
+		"ctx":                        ctx,
+		"sheets.Service":             sheetsService,
 	}
 
 	// WHEN
-	cn, err := NewGoogleConnection(&context, credentials, scope...)
+	cn, err := NewGoogleSheetsConnection(&context, credentials, scope...)
 	if err != nil {
 		t.Fatalf("TestGoogleDataAccess: Error %v", err)
 	}
 	actual := map[string]interface{}{
-		"credentialsJSON": configFactory.credentialsJSON,
-		"scope":           configFactory.scopes,
-		"called":          httpClientFactoryGetter.called,
-		"ctx":             httpClientFactoryGetter.ctx,
-		"http.Client":     cn.(*connection).client,
+		"credentialsJSON":            factory.credentialsJSON,
+		"scope":                      factory.scopes,
+		"getHttpClientFactoryCalled": factory.getHttpClientFactoryCalled,
+		"ctx":                        factory.ctx,
+		"sheets.Service":             cn.(*connection).srv,
 	}
 	// THEN
 	if !reflect.DeepEqual(actual, expected) {
@@ -230,7 +239,76 @@ func mockServerFixture() *httptest.Server {
 	return mockServer
 }
 
-func TestGoogleSheetOutput(t *testing.T) {
+// type mockGoogleConnection struct {
+// 	client *http.Client
+// }
+
+// func (c *mockGoogleConnection) Get(impl interface{}) {
+// 	*(impl.(**http.Client)) = c.client
+// }
+
+// func TestGoogleSheetOutput(t *testing.T) {
+// 	// GIVEN
+// 	mockServer := mockServerFixture()
+// 	httpClient := mockServer.Client()
+// 	sheetNumber := int64(1)
+// 	spreadsheetId := spreadsheetIdFixture()
+// 	startCellRef := "Test!B2"
+// 	data := "Hello|World"
+// 	output := NewGoogleSheetOutput(startCellRef)
+
+// 	// WHEN
+// 	output.Write()
+// 	srv, err := sheets.New(client)
+// 	// Update the basepath to use the mock url.
+// 	srv.BasePath = mockServer.URL
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	spreadsheetsGetCall := srv.Spreadsheets.Get(spreadsheetId)
+// 	spreadsheet, err := spreadsheetsGetCall.Context(context.Background()).Do()
+// 	if err != nil {
+// 		t.Fatalf("Unable to get spreadsheets: %v", err)
+// 	}
+// 	var sheetId int64
+// 	sheetId = -1
+// 	for _, s := range spreadsheet.Sheets {
+// 		if s.Properties.Title == sheetTitleFixture(sheetNumber) {
+// 			sheetId = s.Properties.SheetId
+// 			break
+// 		}
+// 	}
+// 	if sheetId == -1 {
+// 		t.Fatalf(`Sheet ${sheetName} not found`)
+// 	}
+// 	data := dataFixture()
+// 	gridCoordinate := gridCoordinateFixture(sheetNumber)
+// 	pasteDataRequest := sheets.PasteDataRequest{
+// 		Coordinate: gridCoordinate,
+// 		Data:       data,
+// 		Delimiter:  "|",
+// 		Type:       "PASTE_NORMAL",
+// 	}
+// 	request := sheets.Request{
+// 		PasteData: &pasteDataRequest,
+// 	}
+
+// 	batchUpdateSpreadsheetRequest := sheets.BatchUpdateSpreadsheetRequest{
+// 		Requests: []*sheets.Request{
+// 			&request,
+// 		},
+// 	}
+// 	call := srv.Spreadsheets.BatchUpdate(
+// 		spreadsheetId,
+// 		&batchUpdateSpreadsheetRequest,
+// 	)
+// 	_, err = call.Context(context.Background()).Do()
+// 	if err != nil {
+// 		log.Fatalf("Unable to store data in sheet: %v", err)
+// 	}
+// }
+
+func TestGoogleSheetsAPIMockServer(t *testing.T) {
 	// GIVEN
 	mockServer := mockServerFixture()
 	client := mockServer.Client()
