@@ -206,7 +206,10 @@ func (h *mockBatchUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 		} else {
-			w.WriteHeader(http.StatusCreated)
+			batchUpdateSpreadsheetResponse := sheets.BatchUpdateSpreadsheetResponse{
+				SpreadsheetId: spreadsheetId,
+			}
+			json.NewEncoder(w).Encode(batchUpdateSpreadsheetResponse)
 		}
 	}
 }
@@ -215,10 +218,14 @@ func mockServerFixture() *httptest.Server {
 	router := mux.NewRouter()
 	// https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}
 	spreadsheetsHandler := &mockSpreadsheetsHandler{}
-	router.Handle("/v4/spreadsheets/{spreadsheetId}", spreadsheetsHandler)
+	router.Handle(
+		"/v4/spreadsheets/{spreadsheetId}", spreadsheetsHandler,
+	).Methods("GET")
 	batchUpdateHandler := &mockBatchUpdateHandler{}
 	// https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}:batchUpdate
-	router.Handle("/v4/spreadsheets/{spreadsheetId}:batchUpdate", batchUpdateHandler)
+	router.Handle(
+		"/v4/spreadsheets/{spreadsheetId}:batchUpdate", batchUpdateHandler,
+	).Methods("POST")
 	mockServer := httptest.NewServer(router)
 	return mockServer
 }
