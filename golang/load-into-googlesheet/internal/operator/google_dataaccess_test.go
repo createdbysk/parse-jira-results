@@ -110,11 +110,13 @@ func TestGoogleContext(t *testing.T) {
 	// GIVEN
 	jwtConfigFactoryPtr := testutils.GetFnPtr(google.JWTConfigFromJSON)
 	getHttpClientFactoryFnPtr := testutils.GetFnPtr(getHttpClientFactory)
+	sheetsServiceFactoryFnPtr := testutils.GetFnPtr(sheets.New)
 	ctx := context.Background()
 
 	expected := map[string]interface{}{
 		"ConfigFactory":        jwtConfigFactoryPtr,
 		"GetHttpClientFactory": getHttpClientFactoryFnPtr,
+		"ServiceFactory":       sheetsServiceFactoryFnPtr,
 		"ctx":                  ctx,
 	}
 
@@ -122,9 +124,9 @@ func TestGoogleContext(t *testing.T) {
 	googleContext := NewGoogleContext()
 
 	actual := map[string]interface{}{
-		"ConfigFactory": testutils.GetFnPtr(googleContext.ConfigFactory),
-
+		"ConfigFactory":        testutils.GetFnPtr(googleContext.ConfigFactory),
 		"GetHttpClientFactory": testutils.GetFnPtr(googleContext.GetHttpClientFactory),
+		"ServiceFactory":       testutils.GetFnPtr(googleContext.ServiceFactory),
 		"ctx":                  googleContext.Context,
 	}
 

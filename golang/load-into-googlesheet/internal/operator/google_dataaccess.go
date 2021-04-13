@@ -34,6 +34,7 @@ func NewGoogleContext() *GoogleContext {
 	return &GoogleContext{
 		ConfigFactory:        google.JWTConfigFromJSON,
 		GetHttpClientFactory: getHttpClientFactory,
+		ServiceFactory:       sheets.New,
 		Context:              context.Background(),
 	}
 }
