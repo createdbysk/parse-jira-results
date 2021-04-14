@@ -85,7 +85,9 @@ func TestNewGoogleSheetsConnection(t *testing.T) {
 	}
 
 	// WHEN
+	var srv *sheets.Service
 	cn, err := NewGoogleSheetsConnection(&context, credentials, scope...)
+	cn.Get(&srv)
 	if err != nil {
 		t.Fatalf("TestGoogleDataAccess: Error %v", err)
 	}
@@ -94,7 +96,7 @@ func TestNewGoogleSheetsConnection(t *testing.T) {
 		"scope":                      factory.scopes,
 		"getHttpClientFactoryCalled": factory.getHttpClientFactoryCalled,
 		"ctx":                        factory.ctx,
-		"sheets.Service":             cn.(*connection).srv,
+		"sheets.Service":             srv,
 	}
 	// THEN
 	if !reflect.DeepEqual(actual, expected) {
@@ -134,6 +136,25 @@ func TestGoogleContext(t *testing.T) {
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf(
 			"TestGoogleContext: expected: %v, actual %v",
+			expected,
+			actual,
+		)
+	}
+}
+
+func TestGetHttpClientFactory(t *testing.T) {
+	// GIVEN
+	config := &jwt.Config{}
+
+	expected := testutils.GetFnPtr(config.Client)
+
+	// WHEN
+	actual := testutils.GetFnPtr(getHttpClientFactory(config))
+
+	// THEN
+	if actual != expected {
+		t.Errorf(
+			"getHttpClientFactory: expected %v, actual %v",
 			expected,
 			actual,
 		)

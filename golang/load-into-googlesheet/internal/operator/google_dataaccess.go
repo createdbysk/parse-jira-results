@@ -62,14 +62,11 @@ func NewGoogleSheetsConnection(googleCtx *GoogleContext, credentials []byte, sco
 }
 
 func (c *connection) Get(impl interface{}) {
-	err := errors.New("not implemented")
-	panic(err)
+	*(impl.(**sheets.Service)) = c.srv
 }
 
 func getHttpClientFactory(config *jwt.Config) HttpClientFactory {
-	err := errors.New("not implemented")
-	panic(err)
-	return nil
+	return config.Client
 }
 
 type googleSheetOutput struct {
