@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -95,5 +96,52 @@ func NewGoogleSheetOutput(spreadsheetId string, cellRef string) Output {
 }
 
 func (o *googleSheetOutput) Write(c Connection, data interface{}) error {
-	return errors.New("not implemented")
+	var srv *sheets.Service
+	c.Get(&srv)
+	spreadsheetsGetCall := srv.Spreadsheets.Get(o.spreadsheetId)
+	spreadsheet, err := spreadsheetsGetCall.Context(context.Background()).Do()
+	if err != nil {
+		return err
+	}
+	var sheetId int64
+	sheetId = -1
+	for _, s := range spreadsheet.Sheets {
+		if s.Properties.Title == o.sheetTitle {
+			sheetId = s.Properties.SheetId
+			break
+		}
+	}
+	if sheetId == -1 {
+		return errors.New(fmt.Sprintf("sheet %v not found", o.sheetTitle))
+	}
+	gridCoordinate := &sheets.GridCoordinate{
+		SheetId:     sheetId,
+		RowIndex:    o.rowIndex,
+		ColumnIndex: o.columnIndex,
+	}
+	d := data.(string)
+	pasteDataRequest := sheets.PasteDataRequest{
+		Coordinate: gridCoordinate,
+		Data:       d,
+		Delimiter:  "|",
+		Type:       "PASTE_NORMAL",
+	}
+	request := sheets.Request{
+		PasteData: &pasteDataRequest,
+	}
+
+	batchUpdateSpreadsheetRequest := sheets.BatchUpdateSpreadsheetRequest{
+		Requests: []*sheets.Request{
+			&request,
+		},
+	}
+	call := srv.Spreadsheets.BatchUpdate(
+		o.spreadsheetId,
+		&batchUpdateSpreadsheetRequest,
+	)
+	_, err = call.Context(context.Background()).Do()
+	if err != nil {
+		return err
+	}
+	return nil
 }

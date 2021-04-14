@@ -275,14 +275,14 @@ func TestGoogleSheetOutput(t *testing.T) {
 	startCellRef := fmt.Sprintf(
 		"%s!%v%v",
 		sheetTitle,
-		rune(int64('A')+gridCoordinate.ColumnIndex),
+		string(rune(int64('A')+gridCoordinate.ColumnIndex)),
 		gridCoordinate.RowIndex+1,
 	)
 	data := "Hello|World"
 	output := NewGoogleSheetOutput(spreadsheetId, startCellRef)
 
 	expected := map[string]interface{}{
-		"gridCoordinate": gridCoordinate,
+		"gridCoordinate": *gridCoordinate,
 		"data":           data,
 		"delimiter":      "|",
 		"type":           "PASTE_NORMAL",
@@ -298,7 +298,7 @@ func TestGoogleSheetOutput(t *testing.T) {
 	// THEN
 	pasteDataRequest := batchUpdateHandler.request.Requests[0].PasteData
 	actual := map[string]interface{}{
-		"gridCoordinate": pasteDataRequest.Coordinate,
+		"gridCoordinate": *pasteDataRequest.Coordinate,
 		"data":           pasteDataRequest.Data,
 		"delimiter":      pasteDataRequest.Delimiter,
 		"type":           pasteDataRequest.Type,
