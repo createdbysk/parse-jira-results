@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"regexp"
+	"strconv"
 
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
@@ -67,4 +69,31 @@ func getHttpClientFactory(config *jwt.Config) HttpClientFactory {
 	err := errors.New("not implemented")
 	panic(err)
 	return nil
+}
+
+type googleSheetOutput struct {
+	spreadsheetId string
+	sheetTitle    string
+	columnIndex   int64
+	rowIndex      int64
+}
+
+func NewGoogleSheetOutput(spreadsheetId string, cellRef string) Output {
+	pattern := `(\w+)[!](\w)(\d+)`
+	re := regexp.MustCompile(pattern)
+	submatches := re.FindAllStringSubmatch(cellRef, -1)[0]
+	sheetTitle := submatches[1]
+	columnIndex := int(submatches[2][0]) - int('A')
+	rowIndex, _ := strconv.Atoi(submatches[3])
+	rowIndex -= 1
+	return &googleSheetOutput{
+		spreadsheetId: spreadsheetId,
+		sheetTitle:    sheetTitle,
+		rowIndex:      int64(rowIndex),
+		columnIndex:   int64(columnIndex),
+	}
+}
+
+func (o *googleSheetOutput) Write(c Connection, data interface{}) error {
+	return errors.New("not implemented")
 }

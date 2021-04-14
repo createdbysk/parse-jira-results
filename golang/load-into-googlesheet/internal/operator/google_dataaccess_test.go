@@ -225,14 +225,23 @@ func (h *mockBatchUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func mockServerFixture() *httptest.Server {
+func mockSpreadsheetsHandlerFixture() *mockSpreadsheetsHandler {
+	return &mockSpreadsheetsHandler{}
+}
+
+func mockBatchUpdateHandlerFixture() *mockBatchUpdateHandler {
+	return &mockBatchUpdateHandler{}
+}
+
+func mockServerFixture(
+	spreadsheetsHandler *mockSpreadsheetsHandler,
+	batchUpdateHandler *mockBatchUpdateHandler,
+) *httptest.Server {
 	router := mux.NewRouter()
 	// https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}
-	spreadsheetsHandler := &mockSpreadsheetsHandler{}
 	router.Handle(
 		"/v4/spreadsheets/{spreadsheetId}", spreadsheetsHandler,
 	).Methods("GET")
-	batchUpdateHandler := &mockBatchUpdateHandler{}
 	// https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}:batchUpdate
 	router.Handle(
 		"/v4/spreadsheets/{spreadsheetId}:batchUpdate", batchUpdateHandler,
@@ -241,78 +250,74 @@ func mockServerFixture() *httptest.Server {
 	return mockServer
 }
 
-// type mockGoogleConnection struct {
-// 	client *http.Client
-// }
+type mockSheetsConnection struct {
+	srv *sheets.Service
+}
 
-// func (c *mockGoogleConnection) Get(impl interface{}) {
-// 	*(impl.(**http.Client)) = c.client
-// }
+func (c *mockSheetsConnection) Get(impl interface{}) {
+	*(impl.(**sheets.Service)) = c.srv
+}
 
-// func TestGoogleSheetOutput(t *testing.T) {
-// 	// GIVEN
-// 	mockServer := mockServerFixture()
-// 	httpClient := mockServer.Client()
-// 	sheetNumber := int64(1)
-// 	spreadsheetId := spreadsheetIdFixture()
-// 	startCellRef := "Test!B2"
-// 	data := "Hello|World"
-// 	output := NewGoogleSheetOutput(startCellRef)
+func TestGoogleSheetOutput(t *testing.T) {
+	// GIVEN
+	spreadsheetsHandler := mockSpreadsheetsHandlerFixture()
+	batchUpdateHandler := mockBatchUpdateHandlerFixture()
+	mockServer := mockServerFixture(spreadsheetsHandler, batchUpdateHandler)
+	httpClient := mockServer.Client()
+	srv, err := sheets.New(httpClient)
+	srv.BasePath = mockServer.URL
+	connection := &mockSheetsConnection{srv}
 
-// 	// WHEN
-// 	output.Write()
-// 	srv, err := sheets.New(client)
-// 	// Update the basepath to use the mock url.
-// 	srv.BasePath = mockServer.URL
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	spreadsheetsGetCall := srv.Spreadsheets.Get(spreadsheetId)
-// 	spreadsheet, err := spreadsheetsGetCall.Context(context.Background()).Do()
-// 	if err != nil {
-// 		t.Fatalf("Unable to get spreadsheets: %v", err)
-// 	}
-// 	var sheetId int64
-// 	sheetId = -1
-// 	for _, s := range spreadsheet.Sheets {
-// 		if s.Properties.Title == sheetTitleFixture(sheetNumber) {
-// 			sheetId = s.Properties.SheetId
-// 			break
-// 		}
-// 	}
-// 	if sheetId == -1 {
-// 		t.Fatalf(`Sheet ${sheetName} not found`)
-// 	}
-// 	data := dataFixture()
-// 	gridCoordinate := gridCoordinateFixture(sheetNumber)
-// 	pasteDataRequest := sheets.PasteDataRequest{
-// 		Coordinate: gridCoordinate,
-// 		Data:       data,
-// 		Delimiter:  "|",
-// 		Type:       "PASTE_NORMAL",
-// 	}
-// 	request := sheets.Request{
-// 		PasteData: &pasteDataRequest,
-// 	}
+	sheetNumber := int64(1)
+	spreadsheetId := spreadsheetIdFixture()
+	sheetTitle := sheetTitleFixture(sheetNumber)
+	gridCoordinate := gridCoordinateFixture(sheetNumber)
+	startCellRef := fmt.Sprintf(
+		"%s!%v%v",
+		sheetTitle,
+		rune(int64('A')+gridCoordinate.ColumnIndex),
+		gridCoordinate.RowIndex+1,
+	)
+	data := "Hello|World"
+	output := NewGoogleSheetOutput(spreadsheetId, startCellRef)
 
-// 	batchUpdateSpreadsheetRequest := sheets.BatchUpdateSpreadsheetRequest{
-// 		Requests: []*sheets.Request{
-// 			&request,
-// 		},
-// 	}
-// 	call := srv.Spreadsheets.BatchUpdate(
-// 		spreadsheetId,
-// 		&batchUpdateSpreadsheetRequest,
-// 	)
-// 	_, err = call.Context(context.Background()).Do()
-// 	if err != nil {
-// 		log.Fatalf("Unable to store data in sheet: %v", err)
-// 	}
-// }
+	expected := map[string]interface{}{
+		"gridCoordinate": gridCoordinate,
+		"data":           data,
+		"delimiter":      "|",
+		"type":           "PASTE_NORMAL",
+	}
+
+	// WHEN
+	err = output.Write(connection, data)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// THEN
+	pasteDataRequest := batchUpdateHandler.request.Requests[0].PasteData
+	actual := map[string]interface{}{
+		"gridCoordinate": pasteDataRequest.Coordinate,
+		"data":           pasteDataRequest.Data,
+		"delimiter":      pasteDataRequest.Delimiter,
+		"type":           pasteDataRequest.Type,
+	}
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf(
+			"TestGoogleSheetOutput: expected %v, actual %v",
+			expected,
+			actual,
+		)
+	}
+}
 
 func TestGoogleSheetsAPIMockServer(t *testing.T) {
 	// GIVEN
-	mockServer := mockServerFixture()
+	spreadsheetsHandler := mockSpreadsheetsHandlerFixture()
+	batchUpdateHandler := mockBatchUpdateHandlerFixture()
+	mockServer := mockServerFixture(spreadsheetsHandler, batchUpdateHandler)
 	client := mockServer.Client()
 	sheetNumber := int64(1)
 	spreadsheetId := spreadsheetIdFixture()
