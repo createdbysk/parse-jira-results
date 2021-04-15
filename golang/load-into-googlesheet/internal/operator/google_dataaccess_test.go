@@ -27,12 +27,14 @@ type mockFactory struct {
 	ctx                        context.Context
 	mockHttpClient             *http.Client
 	mockSheetsService          *sheets.Service
+	createConfigError          error
+	createServiceError         error
 }
 
-func (params *mockFactory) createConfig(credentials []byte, scope ...string) (*jwt.Config, error) {
-	params.credentialsJSON = string(credentials)
-	params.scopes = scope
-	return params.mockJWTConfig, nil
+func (c *mockFactory) createConfig(credentials []byte, scope ...string) (*jwt.Config, error) {
+	c.credentialsJSON = string(credentials)
+	c.scopes = scope
+	return c.mockJWTConfig, c.createConfigError
 }
 
 func (c *mockFactory) getHttpClientFactory(config *jwt.Config) HttpClientFactory {
@@ -49,7 +51,7 @@ func (c *mockFactory) createService(client *http.Client) (*sheets.Service, error
 	if client != c.mockHttpClient {
 		return nil, errors.New("Invalid http client parameter.")
 	}
-	return c.mockSheetsService, nil
+	return c.mockSheetsService, c.createServiceError
 }
 
 func TestNewGoogleSheetsConnection(t *testing.T) {
@@ -104,6 +106,64 @@ func TestNewGoogleSheetsConnection(t *testing.T) {
 			"TestGoogleDataAccess: expected %v, actual %v",
 			expected,
 			actual,
+		)
+	}
+}
+
+func TestGoogleSheetConnectionFailures(t *testing.T) {
+	// GIVEN
+	testcases := []struct {
+		testcase           string
+		createConfigError  error
+		createServiceError error
+	}{
+		{
+			testcase:          "createConfigError",
+			createConfigError: errors.New("create config failure"),
+		},
+		{
+			testcase:           "createServiceError",
+			createServiceError: errors.New("create service failure"),
+		},
+	}
+
+	for _, tt := range testcases {
+		t.Run(
+			tt.testcase,
+			func(t *testing.T) {
+				// GIVEN
+				credentialsJSON := `{"fake": "Credentials"}`
+				credentials := bytes.NewBufferString(credentialsJSON).Bytes()
+				scope := []string{
+					"http://www.testscope.com/test1",
+					"http://www.testscope.com/test2",
+				}
+				jwtConfig := jwt.Config{}
+				httpClient := &http.Client{}
+				sheetsService := &sheets.Service{}
+				ctx := context.TODO()
+				factory := &mockFactory{
+					mockJWTConfig:      &jwtConfig,
+					mockHttpClient:     httpClient,
+					mockSheetsService:  sheetsService,
+					createConfigError:  tt.createConfigError,
+					createServiceError: tt.createServiceError,
+				}
+				context := GoogleContext{
+					ConfigFactory:        factory.createConfig,
+					GetHttpClientFactory: factory.getHttpClientFactory,
+					ServiceFactory:       factory.createService,
+					Context:              ctx,
+				}
+
+				// WHEN
+				_, err := NewGoogleSheetsConnection(&context, credentials, scope...)
+
+				// THEN
+				if err == nil {
+					t.Errorf("%v: Expected error. None returned.", tt.testcase)
+				}
+			},
 		)
 	}
 }
