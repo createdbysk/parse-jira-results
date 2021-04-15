@@ -2,7 +2,6 @@ package operator
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -109,7 +108,7 @@ func (o *googleSheetOutput) Write(c Connection, data interface{}) error {
 		}
 	}
 	if sheetId == -1 {
-		return errors.New(fmt.Sprintf("sheet %v not found", o.sheetTitle))
+		return fmt.Errorf("sheet %v not found", o.sheetTitle)
 	}
 	gridCoordinate := &sheets.GridCoordinate{
 		SheetId:     sheetId,

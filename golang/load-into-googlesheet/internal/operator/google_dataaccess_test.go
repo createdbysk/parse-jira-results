@@ -165,8 +165,16 @@ func spreadsheetIdFixture() string {
 	return "spreadsheetId"
 }
 
+func badSpreadsheetIdFixture() string {
+	return "badSpreadsheetId"
+}
+
 func sheetTitleFixture(index int64) string {
 	return fmt.Sprintf("TAB%d", index)
+}
+
+func badSheetTitleFixture() string {
+	return fmt.Sprintf("ImBad")
 }
 
 func sheetIdFixture(index int64) int64 {
@@ -226,22 +234,30 @@ func (h *mockSpreadsheetsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 }
 
 type mockBatchUpdateHandler struct {
+	err     error
 	request sheets.BatchUpdateSpreadsheetRequest
 }
 
 func (h *mockBatchUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}:batchUpda
-	vars := mux.Vars(r)
-	spreadsheetId := vars["spreadsheetId"]
-	if spreadsheetId == spreadsheetIdFixture() {
-		err := json.NewDecoder(r.Body).Decode(&h.request)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-		} else {
-			batchUpdateSpreadsheetResponse := sheets.BatchUpdateSpreadsheetResponse{
-				SpreadsheetId: spreadsheetId,
+	// If force error, then just return an error.
+	if h.err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		// https://sheets.googleapis.com/v4/spreadsheets/{spreadsheetId}:batchUpda
+		vars := mux.Vars(r)
+		spreadsheetId := vars["spreadsheetId"]
+		if spreadsheetId == spreadsheetIdFixture() {
+			err := json.NewDecoder(r.Body).Decode(&h.request)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+			} else {
+				batchUpdateSpreadsheetResponse := sheets.BatchUpdateSpreadsheetResponse{
+					SpreadsheetId: spreadsheetId,
+				}
+				json.NewEncoder(w).Encode(batchUpdateSpreadsheetResponse)
 			}
-			json.NewEncoder(w).Encode(batchUpdateSpreadsheetResponse)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
 		}
 	}
 }
@@ -250,8 +266,8 @@ func mockSpreadsheetsHandlerFixture() *mockSpreadsheetsHandler {
 	return &mockSpreadsheetsHandler{}
 }
 
-func mockBatchUpdateHandlerFixture() *mockBatchUpdateHandler {
-	return &mockBatchUpdateHandler{}
+func mockBatchUpdateHandlerFixture(err error) *mockBatchUpdateHandler {
+	return &mockBatchUpdateHandler{err: err}
 }
 
 func mockServerFixture(
@@ -282,7 +298,7 @@ func (c *mockSheetsConnection) Get(impl interface{}) {
 func TestGoogleSheetOutput(t *testing.T) {
 	// GIVEN
 	spreadsheetsHandler := mockSpreadsheetsHandlerFixture()
-	batchUpdateHandler := mockBatchUpdateHandlerFixture()
+	batchUpdateHandler := mockBatchUpdateHandlerFixture(nil)
 	mockServer := mockServerFixture(spreadsheetsHandler, batchUpdateHandler)
 	httpClient := mockServer.Client()
 	srv, err := sheets.New(httpClient)
@@ -334,10 +350,75 @@ func TestGoogleSheetOutput(t *testing.T) {
 	}
 }
 
+func TestGoogleSheetOutputFailures(t *testing.T) {
+	// GIVEN
+	sheetNumber := int64(1)
+	testcases := []struct {
+		testcase      string
+		spreadsheetId string
+		sheetTitle    string
+		err           error
+	}{
+		{
+			testcase:      "badSpreadsheetId",
+			spreadsheetId: badSpreadsheetIdFixture(),
+			sheetTitle:    sheetTitleFixture(sheetNumber),
+			err:           nil,
+		},
+		{
+			testcase:      "badSheetTitle",
+			spreadsheetId: spreadsheetIdFixture(),
+			sheetTitle:    badSheetTitleFixture(),
+			err:           nil,
+		},
+		{
+			testcase:      "forcedError",
+			spreadsheetId: spreadsheetIdFixture(),
+			sheetTitle:    sheetTitleFixture(sheetNumber),
+			err:           errors.New("forced error"),
+		},
+	}
+
+	for _, tt := range testcases {
+		t.Run(
+			tt.testcase,
+			func(t *testing.T) {
+				// GIVEN
+				spreadsheetId := tt.spreadsheetId
+				sheetTitle := tt.sheetTitle
+				gridCoordinate := gridCoordinateFixture(sheetNumber)
+				spreadsheetsHandler := mockSpreadsheetsHandlerFixture()
+				batchUpdateHandler := mockBatchUpdateHandlerFixture(tt.err)
+				mockServer := mockServerFixture(spreadsheetsHandler, batchUpdateHandler)
+				httpClient := mockServer.Client()
+				srv, err := sheets.New(httpClient)
+				srv.BasePath = mockServer.URL
+				connection := &mockSheetsConnection{srv}
+				startCellRef := fmt.Sprintf(
+					"%s!%v%v",
+					sheetTitle,
+					string(rune(int64('A')+gridCoordinate.ColumnIndex)),
+					gridCoordinate.RowIndex+1,
+				)
+				data := "Hello|World"
+				output := NewGoogleSheetOutput(spreadsheetId, startCellRef)
+
+				// WHEN
+				err = output.Write(connection, data)
+
+				// THEN
+				if err == nil {
+					t.Errorf("%v: Expected error. None returned.", tt.testcase)
+				}
+			},
+		)
+	}
+}
+
 func TestGoogleSheetsAPIMockServer(t *testing.T) {
 	// GIVEN
 	spreadsheetsHandler := mockSpreadsheetsHandlerFixture()
-	batchUpdateHandler := mockBatchUpdateHandlerFixture()
+	batchUpdateHandler := mockBatchUpdateHandlerFixture(nil)
 	mockServer := mockServerFixture(spreadsheetsHandler, batchUpdateHandler)
 	client := mockServer.Client()
 	sheetNumber := int64(1)
