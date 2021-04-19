@@ -241,6 +241,15 @@ func sheetIdFixture(index int64) int64 {
 	return index
 }
 
+func dataFixture() string {
+	return "Hello|World"
+}
+
+func iteratorFixture() Iterator {
+	it := &mockIterator{data: dataFixture()}
+	return it
+}
+
 func sheetPropertiesFixture(index int64) *sheets.SheetProperties {
 	properties := sheets.SheetProperties{
 		Title:   sheetTitleFixture(index),
@@ -266,10 +275,6 @@ func spreadsheetFixture() *sheets.Spreadsheet {
 		Sheets: shts,
 	}
 	return spreadsheet
-}
-
-func dataFixture() string {
-	return "Hello|World"
 }
 
 func gridCoordinateFixture(index int64) *sheets.GridCoordinate {
@@ -375,18 +380,18 @@ func TestGoogleSheetOutput(t *testing.T) {
 		string(rune(int64('A')+gridCoordinate.ColumnIndex)),
 		gridCoordinate.RowIndex+1,
 	)
-	data := "Hello|World"
+	it := iteratorFixture()
 	output := NewGoogleSheetOutput(spreadsheetId, startCellRef)
 
 	expected := map[string]interface{}{
 		"gridCoordinate": *gridCoordinate,
-		"data":           data,
+		"data":           dataFixture(),
 		"delimiter":      "|",
 		"type":           "PASTE_NORMAL",
 	}
 
 	// WHEN
-	err = output.Write(connection, data)
+	err = output.Write(connection, it)
 
 	if err != nil {
 		t.Fatal(err)
@@ -408,6 +413,15 @@ func TestGoogleSheetOutput(t *testing.T) {
 			actual,
 		)
 	}
+}
+
+type mockIterator struct {
+	data string
+}
+
+func (it *mockIterator) Next(data interface{}) bool {
+	*(data.(*string)) = it.data
+	return false
 }
 
 func TestGoogleSheetOutputFailures(t *testing.T) {
@@ -460,11 +474,11 @@ func TestGoogleSheetOutputFailures(t *testing.T) {
 					string(rune(int64('A')+gridCoordinate.ColumnIndex)),
 					gridCoordinate.RowIndex+1,
 				)
-				data := "Hello|World"
+				it := iteratorFixture()
 				output := NewGoogleSheetOutput(spreadsheetId, startCellRef)
 
 				// WHEN
-				err = output.Write(connection, data)
+				err = output.Write(connection, it)
 
 				// THEN
 				if err == nil {

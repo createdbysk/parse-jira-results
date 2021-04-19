@@ -91,7 +91,7 @@ func NewGoogleSheetOutput(spreadsheetId string, cellRef string) Output {
 	}
 }
 
-func (o *googleSheetOutput) Write(c Connection, data interface{}) error {
+func (o *googleSheetOutput) Write(c Connection, it Iterator) error {
 	var srv *sheets.Service
 	c.Get(&srv)
 	spreadsheetsGetCall := srv.Spreadsheets.Get(o.spreadsheetId)
@@ -115,10 +115,11 @@ func (o *googleSheetOutput) Write(c Connection, data interface{}) error {
 		RowIndex:    o.rowIndex,
 		ColumnIndex: o.columnIndex,
 	}
-	d := data.(string)
+	var data string
+	it.Next(&data)
 	pasteDataRequest := sheets.PasteDataRequest{
 		Coordinate: gridCoordinate,
-		Data:       d,
+		Data:       data,
 		Delimiter:  "|",
 		Type:       "PASTE_NORMAL",
 	}
