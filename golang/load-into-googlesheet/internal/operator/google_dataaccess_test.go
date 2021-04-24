@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
+	"local.dev/sheetsLoader/internal/config"
 )
 
 type mockFactory struct {
@@ -43,26 +44,61 @@ func (c *mockFactory) createService(ctx context.Context, option ...option.Client
 	return c.mockSheetsService, c.createServiceError
 }
 
-func TestNewGoogleSheetsConnection(t *testing.T) {
-	// GIVEN
-	credentialsFilePath := "/path/to/creds"
-	scope := []string{
+func credentialsFilePathFixture() string {
+	return "/path/to/creds"
+}
+
+func scopesFixture() []string {
+	return []string{
 		"http://www.testscope.com/test1",
 		"http://www.testscope.com/test2",
 	}
-	sheetsService := &sheets.Service{}
-	ctx := context.TODO()
-	factory := &mockFactory{
+}
+
+func sheetsServiceFixture() *sheets.Service {
+	return &sheets.Service{}
+}
+
+func contextFixture() context.Context {
+	return context.TODO()
+}
+
+func mockFactoryFixture(
+	credentialsFilePath string,
+	scope []string,
+	sheetsService *sheets.Service,
+	createServiceError error,
+) *mockFactory {
+	return &mockFactory{
 		mockOptionWithCredentialsFile: option.WithCredentialsFile(credentialsFilePath),
 		mockOptionWithScopes:          option.WithScopes(scope...),
 		mockSheetsService:             sheetsService,
+		createServiceError:            createServiceError,
 	}
-	context := GoogleContext{
+}
+
+func mockGoogleContextFixture(factory *mockFactory, ctx context.Context) *config.GoogleContext {
+	return &config.GoogleContext{
 		OptionWithCredentialsFileFactory: factory.createOptionWithCredentialsFile,
 		OptionWithScopesFactory:          factory.createOptionWithScopes,
 		SheetsServiceFactory:             factory.createService,
 		Context:                          ctx,
 	}
+}
+
+func TestNewGoogleSheetsConnection(t *testing.T) {
+	// GIVEN
+	credentialsFilePath := credentialsFilePathFixture()
+	scope := scopesFixture()
+	sheetsService := sheetsServiceFixture()
+	ctx := contextFixture()
+	factory := mockFactoryFixture(
+		credentialsFilePath,
+		scope,
+		sheetsService,
+		nil,
+	)
+	context := mockGoogleContextFixture(factory, ctx)
 
 	expected := map[string]interface{}{
 		"credentialsFilePath": credentialsFilePath,
@@ -73,7 +109,7 @@ func TestNewGoogleSheetsConnection(t *testing.T) {
 
 	// WHEN
 	var srv *sheets.Service
-	cn, err := NewGoogleSheetsConnection(&context, credentialsFilePath, scope...)
+	cn, err := NewGoogleSheetsConnection(context, credentialsFilePath, scope...)
 	cn.Get(&srv)
 	if err != nil {
 		t.Fatalf("TestGoogleDataAccess: Error %v", err)
@@ -94,63 +130,29 @@ func TestNewGoogleSheetsConnection(t *testing.T) {
 	}
 }
 
-// func TestGoogleSheetConnectionFailures(t *testing.T) {
-// 	// GIVEN
-// 	testcases := []struct {
-// 		testcase           string
-// 		createConfigError  error
-// 		createServiceError error
-// 	}{
-// 		{
-// 			testcase:          "createConfigError",
-// 			createConfigError: errors.New("create config failure"),
-// 		},
-// 		{
-// 			testcase:           "createServiceError",
-// 			createServiceError: errors.New("create service failure"),
-// 		},
-// 	}
+func TestGoogleSheetConnectionFailures(t *testing.T) {
+	// GIVEN
+	createServiceError := errors.New("create service failure")
+	credentialsFilePath := credentialsFilePathFixture()
+	scope := scopesFixture()
+	sheetsService := sheetsServiceFixture()
+	ctx := contextFixture()
+	factory := mockFactoryFixture(
+		credentialsFilePath,
+		scope,
+		sheetsService,
+		createServiceError,
+	)
+	context := mockGoogleContextFixture(factory, ctx)
 
-// 	for _, tt := range testcases {
-// 		t.Run(
-// 			tt.testcase,
-// 			func(t *testing.T) {
-// 				// GIVEN
-// 				credentialsJSON := `{"fake": "Credentials"}`
-// 				credentials := bytes.NewBufferString(credentialsJSON).Bytes()
-// 				scope := []string{
-// 					"http://www.testscope.com/test1",
-// 					"http://www.testscope.com/test2",
-// 				}
-// 				jwtConfig := jwt.Config{}
-// 				httpClient := &http.Client{}
-// 				sheetsService := &sheets.Service{}
-// 				ctx := context.TODO()
-// 				factory := &mockFactory{
-// 					mockJWTConfig:      &jwtConfig,
-// 					mockHttpClient:     httpClient,
-// 					mockSheetsService:  sheetsService,
-// 					createConfigError:  tt.createConfigError,
-// 					createServiceError: tt.createServiceError,
-// 				}
-// 				context := GoogleContext{
-// 					ConfigFactory:        factory.createConfig,
-// 					GetHttpClientFactory: factory.getHttpClientFactory,
-// 					ServiceFactory:       factory.createService,
-// 					Context:              ctx,
-// 				}
+	// WHEN
+	_, err := NewGoogleSheetsConnection(context, credentialsFilePath, scope...)
 
-// 				// WHEN
-// 				_, err := NewGoogleSheetsConnection(&context, credentials, scope...)
-
-// 				// THEN
-// 				if err == nil {
-// 					t.Errorf("%v: Expected error. None returned.", tt.testcase)
-// 				}
-// 			},
-// 		)
-// 	}
-// }
+	// THEN
+	if err == nil {
+		t.Errorf("TestGoogleSheetConnectionFailures: Expected error. None returned.")
+	}
+}
 
 func spreadsheetIdFixture() string {
 	return "spreadsheetId"

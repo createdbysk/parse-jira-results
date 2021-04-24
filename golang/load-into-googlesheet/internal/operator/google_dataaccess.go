@@ -6,41 +6,15 @@ import (
 	"regexp"
 	"strconv"
 
-	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
+	"local.dev/sheetsLoader/internal/config"
 )
-
-// OptionWithCredentialsFileFactory is the type for a function that creates an option.ClientOption
-// from a credentialsFilePath string
-type OptionWithCredentialsFileFactory func(credentialsFilePath string) option.ClientOption
-
-// OptionWithScopesFactory is the type for a function that creates an option.ClientOption
-// from scopes
-type OptionWithScopesFactory func(scope ...string) option.ClientOption
-
-// SheetsServiceFactory is the type for a function that creates the sheets.Service.
-type SheetsServiceFactory func(ctx context.Context, option ...option.ClientOption) (*sheets.Service, error)
-
-// GoogleContext is the a context abstraction for Google APIs.
-type GoogleContext struct {
-	OptionWithCredentialsFileFactory OptionWithCredentialsFileFactory
-	OptionWithScopesFactory          OptionWithScopesFactory
-	SheetsServiceFactory             SheetsServiceFactory
-	Context                          context.Context
-}
-
-func NewGoogleContext() *GoogleContext {
-	return &GoogleContext{
-		SheetsServiceFactory: sheets.NewService,
-		Context:              context.Background(),
-	}
-}
 
 type connection struct {
 	srv *sheets.Service
 }
 
-func NewGoogleSheetsConnection(googleCtx *GoogleContext, credentialsFilePath string, scope ...string) (Connection, error) {
+func NewGoogleSheetsConnection(googleCtx *config.GoogleContext, credentialsFilePath string, scope ...string) (Connection, error) {
 	optionWithCredentialsFile := googleCtx.OptionWithCredentialsFileFactory(credentialsFilePath)
 	optionWithScopes := googleCtx.OptionWithScopesFactory(scope...)
 	srv, err := googleCtx.SheetsServiceFactory(googleCtx.Context, optionWithCredentialsFile, optionWithScopes)
