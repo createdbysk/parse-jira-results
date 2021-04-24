@@ -16,6 +16,12 @@ Implements the ability to parse the results from the JIRA rest API queries.
 
         JIRA_URL=https://localhost:58080 JIRA_USERNAME=user JIRA_PASSWORD=password ./jira -maxResults 50 ../experiments/jira_renderer/checkStatusChange.tpl 'project = "TEST")' | tee ~/Documents/output.txt
 
+## Experiments
+
+### google_sheet_upload_csv
+
+        echo "Hello|World" | CREDENTIALS_FILEPATH=$(echo ~/<filenpath>) go run upload_to_sheets.go
+
 ## References
 * [Upload to google sheets](https://stackoverflow.com/questions/42362702/how-to-import-a-csv-file-using-google-sheets-api-v4)
 * [Sheets V4 Go Client](https://pkg.go.dev/google.golang.org/api/sheets/v4)

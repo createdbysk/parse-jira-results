@@ -4,14 +4,13 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
+	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
 )
 
@@ -25,18 +24,18 @@ func main() {
 	if credsFilePath == "" {
 		log.Fatalf("CREDENTIALS_FILEPATH environment variable not defined")
 	}
-	b, err := ioutil.ReadFile(credsFilePath)
-	if err != nil {
-		log.Fatalf("Unable to read client secret file: %v", err)
-	}
+	// b, err := ioutil.ReadFile(credsFilePath)
+	// if err != nil {
+	// 	log.Fatalf("Unable to read client secret file: %v", err)
+	// }
 
-	config, err := google.JWTConfigFromJSON(b, sheets.SpreadsheetsScope)
-	if err != nil {
-		log.Fatalf("Unable to parse client secret file to config: %v", err)
-	}
-	client := getClient(config)
+	// config, err := google.JWTConfigFromJSON(b, sheets.SpreadsheetsScope)
+	// if err != nil {
+	// 	log.Fatalf("Unable to parse client secret file to config: %v", err)
+	// }
+	// client := getClient(config)
 
-	srv, err := sheets.New(client)
+	srv, err := sheets.NewService(context.Background(), option.WithCredentialsFile(credsFilePath))
 	if err != nil {
 		log.Fatalf("Unable to retrieve Sheets client: %v", err)
 	}
