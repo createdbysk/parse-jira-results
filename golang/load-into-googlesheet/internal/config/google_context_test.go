@@ -1,55 +1,45 @@
 package config
 
-// func TestGoogleContext(t *testing.T) {
-// 	// GIVEN
-// 	jwtConfigFactoryPtr := testutils.GetFnPtr(google.JWTConfigFromJSON)
-// 	getHttpClientFactoryFnPtr := testutils.GetFnPtr(getHttpClientFactory)
-// 	sheetsServiceFactoryFnPtr := testutils.GetFnPtr(sheets.New)
-// 	ctx := context.Background()
+import (
+	"context"
+	"reflect"
+	"testing"
 
-// 	expected := map[string]interface{}{
-// 		"ConfigFactory":        jwtConfigFactoryPtr,
-// 		"GetHttpClientFactory": getHttpClientFactoryFnPtr,
-// 		"ServiceFactory":       sheetsServiceFactoryFnPtr,
-// 		"ctx":                  ctx,
-// 	}
+	"google.golang.org/api/option"
+	"google.golang.org/api/sheets/v4"
+	"local.dev/sheetsLoader/internal/testutils"
+)
 
-// 	// WHEN
-// 	googleContext := NewGoogleContext()
+func TestGoogleContext(t *testing.T) {
+	// GIVEN
+	optionWithCredentialsFileFactoryFnPtr := testutils.GetFnPtr(option.WithCredentialsFile)
+	optionWithScopesFactoryFnPtr := testutils.GetFnPtr(option.WithScopes)
+	sheetsServiceFactoryFnPtr := testutils.GetFnPtr(sheets.NewService)
+	ctx := context.Background()
 
-// 	actual := map[string]interface{}{
-// 		"ConfigFactory":        testutils.GetFnPtr(googleContext.ConfigFactory),
-// 		"GetHttpClientFactory": testutils.GetFnPtr(googleContext.GetHttpClientFactory),
-// 		"ServiceFactory":       testutils.GetFnPtr(googleContext.ServiceFactory),
-// 		"ctx":                  googleContext.Context,
-// 	}
+	expected := map[string]interface{}{
+		"OptionWithCredentialsFileFactory": optionWithCredentialsFileFactoryFnPtr,
+		"OptionWithScopesFactory":          optionWithScopesFactoryFnPtr,
+		"SheetsServiceFactory":             sheetsServiceFactoryFnPtr,
+		"Context":                          ctx,
+	}
 
-// 	// THEN
-// 	if !reflect.DeepEqual(actual, expected) {
-// 		t.Errorf(
-// 			"TestGoogleContext: expected: %v, actual %v",
-// 			expected,
-// 			actual,
-// 		)
-// 	}
-// }
+	// WHEN
+	googleContext := NewGoogleContext()
 
-// func TestGetHttpClientFactory(t *testing.T) {
-// 	// GIVEN
-// 	jwtConfig := &jwt.Config{}
-// 	googleContext := NewGoogleContext()
+	actual := map[string]interface{}{
+		"OptionWithCredentialsFileFactory": testutils.GetFnPtr(googleContext.OptionWithCredentialsFileFactory),
+		"OptionWithScopesFactory":          testutils.GetFnPtr(googleContext.OptionWithScopesFactory),
+		"SheetsServiceFactory":             testutils.GetFnPtr(googleContext.SheetsServiceFactory),
+		"Context":                          googleContext.Context,
+	}
 
-// 	expected := testutils.GetFnPtr(jwtConfig.Client)
-
-// 	// WHEN
-// 	actual := testutils.GetFnPtr(googleContext.GetHttpClientFactory(jwtConfig))
-
-// 	// THEN
-// 	if actual != expected {
-// 		t.Errorf(
-// 			"getHttpClientFactory: expected %v, actual %v",
-// 			expected,
-// 			actual,
-// 		)
-// 	}
-// }
+	// THEN
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf(
+			"TestGoogleContext: expected: %v, actual %v",
+			expected,
+			actual,
+		)
+	}
+}

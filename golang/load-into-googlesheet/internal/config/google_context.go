@@ -28,7 +28,9 @@ type GoogleContext struct {
 
 func NewGoogleContext() *GoogleContext {
 	return &GoogleContext{
-		SheetsServiceFactory: sheets.NewService,
-		Context:              context.Background(),
+		OptionWithCredentialsFileFactory: option.WithCredentialsFile,
+		OptionWithScopesFactory:          option.WithScopes,
+		SheetsServiceFactory:             sheets.NewService,
+		Context:                          context.Background(),
 	}
 }
