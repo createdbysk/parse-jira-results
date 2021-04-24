@@ -35,7 +35,11 @@ func main() {
 	// }
 	// client := getClient(config)
 
-	srv, err := sheets.NewService(context.Background(), option.WithCredentialsFile(credsFilePath))
+	srv, err := sheets.NewService(
+		context.Background(),
+		option.WithCredentialsFile(credsFilePath),
+		option.WithScopes(sheets.SpreadsheetsScope),
+	)
 	if err != nil {
 		log.Fatalf("Unable to retrieve Sheets client: %v", err)
 	}
