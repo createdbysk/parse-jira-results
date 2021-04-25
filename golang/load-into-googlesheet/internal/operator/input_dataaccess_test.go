@@ -1,10 +1,44 @@
 package operator
 
 import (
+	"io"
 	"reflect"
 	"strings"
 	"testing"
 )
+
+type mockNewReaderConnection struct {
+	c                           Connection
+	reader                      io.Reader
+	previousNewReaderConnection newReaderConnectionType
+}
+
+// NewMockNewReaderConnection mocks operator.NewReaderConnection.
+// It returns the MockFunction interface.
+// Caller must call mockFunction.Unpatch(). The idomatic way to do this
+//
+//		mockFunction := NewMockReaderConnection(connection)
+// 		defer mockFunction.Unpatch()
+func NewMockNewReaderConnection(connection Connection) MockFunction {
+	c := &mockNewReaderConnection{
+		c:                           connection,
+		previousNewReaderConnection: newReaderConnection,
+	}
+	// Set the global variable
+	newReaderConnection = c.newReaderConnection
+
+	return c
+}
+
+func (c *MockNewReaderConnection) newReaderConnection(reader io.Reader) Connection {
+	c.reader = reader
+	return c.Connection
+}
+
+func (c *mockNewReaderConnection) Unpatch() {
+	// Restore the global variable
+	newReaderConnection = c.previousNewReaderConnection
+}
 
 func TestReadFromReader(t *testing.T) {
 	// GIVEN

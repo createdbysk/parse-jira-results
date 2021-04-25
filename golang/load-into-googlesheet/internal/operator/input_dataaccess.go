@@ -10,8 +10,15 @@ type readerConnection struct {
 	r io.Reader
 }
 
-func NewReaderConnection(r io.Reader) Connection {
+// This exists to override this function with a mock in tests
+type newReaderConnectionType func(r io.Reader) Connection
+
+var newReaderConnection newReaderConnectionType = func(r io.Reader) Connection {
 	return &readerConnection{r: r}
+}
+
+func NewReaderConnection(r io.Reader) Connection {
+	return newReaderConnection(r)
 }
 
 func (c *readerConnection) Get(impl interface{}) {
@@ -33,6 +40,10 @@ func (it *readerIterator) Next(data interface{}) bool {
 
 type delimitedTextInput struct{}
 
+func NewDelimitedTextInput() Input {
+	return &delimitedTextInput{}
+}
+
 func (d *delimitedTextInput) Read(c Connection) (Iterator, error) {
 	var r io.Reader
 	c.Get(&r)
@@ -40,8 +51,4 @@ func (d *delimitedTextInput) Read(c Connection) (Iterator, error) {
 	s := bufio.NewScanner(r)
 	it := readerIterator{s}
 	return &it, nil
-}
-
-func NewDelimitedTextInput() Input {
-	return &delimitedTextInput{}
 }
