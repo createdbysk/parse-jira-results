@@ -299,7 +299,8 @@ func TestGoogleSheetOutput(t *testing.T) {
 	batchUpdateHandler := mockBatchUpdateHandlerFixture(nil)
 	mockServer := mockServerFixture(spreadsheetsHandler, batchUpdateHandler)
 	httpClient := mockServer.Client()
-	srv, err := sheets.New(httpClient)
+	ctx := context.TODO()
+	srv, _ := sheets.NewService(ctx, option.WithHTTPClient(httpClient))
 	srv.BasePath = mockServer.URL
 	connection := &mockSheetsConnection{srv}
 
@@ -324,7 +325,7 @@ func TestGoogleSheetOutput(t *testing.T) {
 	}
 
 	// WHEN
-	err = output.Write(connection, it)
+	err := output.Write(connection, it)
 
 	if err != nil {
 		t.Fatal(err)
@@ -398,7 +399,8 @@ func TestGoogleSheetOutputFailures(t *testing.T) {
 				batchUpdateHandler := mockBatchUpdateHandlerFixture(tt.err)
 				mockServer := mockServerFixture(spreadsheetsHandler, batchUpdateHandler)
 				httpClient := mockServer.Client()
-				srv, err := sheets.New(httpClient)
+				ctx := context.TODO()
+				srv, _ := sheets.NewService(ctx, option.WithHTTPClient(httpClient))
 				srv.BasePath = mockServer.URL
 				connection := &mockSheetsConnection{srv}
 				startCellRef := fmt.Sprintf(
@@ -411,7 +413,7 @@ func TestGoogleSheetOutputFailures(t *testing.T) {
 				output := NewGoogleSheetOutput(spreadsheetId, startCellRef)
 
 				// WHEN
-				err = output.Write(connection, it)
+				err := output.Write(connection, it)
 
 				// THEN
 				if err == nil {
