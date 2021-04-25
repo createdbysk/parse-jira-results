@@ -174,12 +174,16 @@ func sheetIdFixture(index int64) int64 {
 	return index
 }
 
-func dataFixture() string {
-	return "Hello|World"
+func delimiterFixture() string {
+	return "+"
 }
 
-func iteratorFixture() Iterator {
-	it := &mockIterator{data: dataFixture()}
+func dataFixture(delimiter string) string {
+	return fmt.Sprintf("Hello%sWorld", delimiter)
+}
+
+func iteratorFixture(data string) Iterator {
+	it := &mockIterator{data: data}
 	return it
 }
 
@@ -308,19 +312,20 @@ func TestGoogleSheetOutput(t *testing.T) {
 	spreadsheetId := spreadsheetIdFixture()
 	sheetTitle := sheetTitleFixture(sheetNumber)
 	gridCoordinate := gridCoordinateFixture(sheetNumber)
+	delimiter := delimiterFixture()
 	startCellRef := fmt.Sprintf(
 		"%s!%v%v",
 		sheetTitle,
 		string(rune(int64('A')+gridCoordinate.ColumnIndex)),
 		gridCoordinate.RowIndex+1,
 	)
-	it := iteratorFixture()
-	output := NewGoogleSheetOutput(spreadsheetId, startCellRef)
-
+	data := dataFixture(delimiter)
+	it := iteratorFixture(data)
+	output := NewGoogleSheetOutput(spreadsheetId, startCellRef, delimiter)
 	expected := map[string]interface{}{
 		"gridCoordinate": *gridCoordinate,
-		"data":           dataFixture(),
-		"delimiter":      "|",
+		"data":           data,
+		"delimiter":      delimiter,
 		"type":           "PASTE_NORMAL",
 	}
 
@@ -395,6 +400,7 @@ func TestGoogleSheetOutputFailures(t *testing.T) {
 				spreadsheetId := tt.spreadsheetId
 				sheetTitle := tt.sheetTitle
 				gridCoordinate := gridCoordinateFixture(sheetNumber)
+				delimiter := delimiterFixture()
 				spreadsheetsHandler := mockSpreadsheetsHandlerFixture()
 				batchUpdateHandler := mockBatchUpdateHandlerFixture(tt.err)
 				mockServer := mockServerFixture(spreadsheetsHandler, batchUpdateHandler)
@@ -409,8 +415,9 @@ func TestGoogleSheetOutputFailures(t *testing.T) {
 					string(rune(int64('A')+gridCoordinate.ColumnIndex)),
 					gridCoordinate.RowIndex+1,
 				)
-				it := iteratorFixture()
-				output := NewGoogleSheetOutput(spreadsheetId, startCellRef)
+				data := dataFixture(delimiter)
+				it := iteratorFixture(data)
+				output := NewGoogleSheetOutput(spreadsheetId, startCellRef, delimiter)
 
 				// WHEN
 				err := output.Write(connection, it)
@@ -456,12 +463,13 @@ func TestGoogleSheetsAPIMockServer(t *testing.T) {
 	if sheetId == -1 {
 		t.Fatalf(`Sheet ${sheetName} not found`)
 	}
-	data := dataFixture()
+	delimiter := delimiterFixture()
+	data := dataFixture(delimiter)
 	gridCoordinate := gridCoordinateFixture(sheetNumber)
 	pasteDataRequest := sheets.PasteDataRequest{
 		Coordinate: gridCoordinate,
 		Data:       data,
-		Delimiter:  "|",
+		Delimiter:  delimiter,
 		Type:       "PASTE_NORMAL",
 	}
 	request := sheets.Request{

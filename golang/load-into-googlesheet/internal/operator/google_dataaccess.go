@@ -34,9 +34,10 @@ type googleSheetOutput struct {
 	sheetTitle    string
 	columnIndex   int64
 	rowIndex      int64
+	delimiter     string
 }
 
-func NewGoogleSheetOutput(spreadsheetId string, cellRef string) Output {
+func NewGoogleSheetOutput(spreadsheetId string, cellRef string, delimiter string) Output {
 	pattern := `(\w+)[!](\w)(\d+)`
 	re := regexp.MustCompile(pattern)
 	submatches := re.FindAllStringSubmatch(cellRef, -1)[0]
@@ -49,6 +50,7 @@ func NewGoogleSheetOutput(spreadsheetId string, cellRef string) Output {
 		sheetTitle:    sheetTitle,
 		rowIndex:      int64(rowIndex),
 		columnIndex:   int64(columnIndex),
+		delimiter:     delimiter,
 	}
 }
 
@@ -81,7 +83,7 @@ func (o *googleSheetOutput) Write(c Connection, it Iterator) error {
 	pasteDataRequest := sheets.PasteDataRequest{
 		Coordinate: gridCoordinate,
 		Data:       data,
-		Delimiter:  "|",
+		Delimiter:  o.delimiter,
 		Type:       "PASTE_NORMAL",
 	}
 	request := sheets.Request{
