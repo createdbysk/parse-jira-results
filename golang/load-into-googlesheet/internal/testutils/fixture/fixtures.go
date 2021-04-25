@@ -2,6 +2,8 @@ package fixture
 
 import (
 	"fmt"
+
+	"google.golang.org/api/sheets/v4"
 )
 
 func SpreadsheetId() string {
@@ -40,4 +42,10 @@ func Delimiter() string {
 
 func Data(delimiter string) string {
 	return fmt.Sprintf("Hello%sWorld", delimiter)
+}
+
+func Scopes() []string {
+	return []string{
+		sheets.SpreadsheetsScope,
+	}
 }
