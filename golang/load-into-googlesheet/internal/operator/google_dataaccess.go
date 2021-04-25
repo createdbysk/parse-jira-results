@@ -37,7 +37,7 @@ type googleSheetOutput struct {
 	delimiter     string
 }
 
-func NewGoogleSheetOutput(spreadsheetId string, cellRef string, delimiter string) Output {
+func NewGoogleSheetsOutput(spreadsheetId string, cellRef string, delimiter string) Output {
 	pattern := `(\w+)[!](\w)(\d+)`
 	re := regexp.MustCompile(pattern)
 	submatches := re.FindAllStringSubmatch(cellRef, -1)[0]

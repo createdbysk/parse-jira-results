@@ -4,21 +4,16 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+
+	"local.dev/sheetsLoader/internal/config"
 )
 
 type readerConnection struct {
 	r io.Reader
 }
 
-// This exists to override this function with a mock in tests
-type newReaderConnectionType func(r io.Reader) Connection
-
-var newReaderConnection newReaderConnectionType = func(r io.Reader) Connection {
-	return &readerConnection{r: r}
-}
-
-func NewReaderConnection(r io.Reader) Connection {
-	return newReaderConnection(r)
+func NewReaderConnection(inputContext *config.InputContext) Connection {
+	return &readerConnection{r: inputContext.Reader}
 }
 
 func (c *readerConnection) Get(impl interface{}) {

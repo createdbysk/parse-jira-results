@@ -15,6 +15,7 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
 	"local.dev/sheetsLoader/internal/config"
+	"local.dev/sheetsLoader/internal/testutils/fixture"
 )
 
 type mockFactory struct {
@@ -175,11 +176,11 @@ func sheetIdFixture(index int64) int64 {
 }
 
 func delimiterFixture() string {
-	return "+"
+	return fixture.Delimiter()
 }
 
 func dataFixture(delimiter string) string {
-	return fmt.Sprintf("Hello%sWorld", delimiter)
+	return fixture.Data(delimiter)
 }
 
 func iteratorFixture(data string) Iterator {
@@ -297,13 +298,13 @@ func (c *mockSheetsConnection) Get(impl interface{}) {
 	*(impl.(**sheets.Service)) = c.srv
 }
 
-func TestGoogleSheetOutput(t *testing.T) {
+func TestGoogleSheetsOutput(t *testing.T) {
 	// GIVEN
 	spreadsheetsHandler := mockSpreadsheetsHandlerFixture()
 	batchUpdateHandler := mockBatchUpdateHandlerFixture(nil)
 	mockServer := mockServerFixture(spreadsheetsHandler, batchUpdateHandler)
 	httpClient := mockServer.Client()
-	ctx := context.TODO()
+	ctx := contextFixture()
 	srv, _ := sheets.NewService(ctx, option.WithHTTPClient(httpClient))
 	srv.BasePath = mockServer.URL
 	connection := &mockSheetsConnection{srv}
@@ -321,7 +322,7 @@ func TestGoogleSheetOutput(t *testing.T) {
 	)
 	data := dataFixture(delimiter)
 	it := iteratorFixture(data)
-	output := NewGoogleSheetOutput(spreadsheetId, startCellRef, delimiter)
+	output := NewGoogleSheetsOutput(spreadsheetId, startCellRef, delimiter)
 	expected := map[string]interface{}{
 		"gridCoordinate": *gridCoordinate,
 		"data":           data,
@@ -363,7 +364,7 @@ func (it *mockIterator) Next(data interface{}) bool {
 	return false
 }
 
-func TestGoogleSheetOutputFailures(t *testing.T) {
+func TestGoogleSheetsOutputFailures(t *testing.T) {
 	// GIVEN
 	sheetNumber := int64(1)
 	testcases := []struct {
@@ -417,7 +418,7 @@ func TestGoogleSheetOutputFailures(t *testing.T) {
 				)
 				data := dataFixture(delimiter)
 				it := iteratorFixture(data)
-				output := NewGoogleSheetOutput(spreadsheetId, startCellRef, delimiter)
+				output := NewGoogleSheetsOutput(spreadsheetId, startCellRef, delimiter)
 
 				// WHEN
 				err := output.Write(connection, it)

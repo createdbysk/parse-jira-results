@@ -1,51 +1,30 @@
 package operator
 
 import (
+	"io"
 	"reflect"
 	"strings"
 	"testing"
+
+	"local.dev/sheetsLoader/internal/config"
 )
 
-// type mockNewReaderConnection struct {
-// 	c                           Connection
-// 	reader                      io.Reader
-// 	previousNewReaderConnection newReaderConnectionType
-// }
+func readerFixture(data string) io.Reader {
+	return strings.NewReader(data)
+}
 
-// // NewMockNewReaderConnection mocks operator.NewReaderConnection.
-// // It returns the MockFunction interface.
-// // Caller must call mockFunction.Unpatch(). The idomatic way to do this
-// //
-// //		mockFunction := NewMockReaderConnection(connection)
-// // 		defer mockFunction.Unpatch()
-// func NewMockNewReaderConnection(connection Connection) MockFunction {
-// 	c := &mockNewReaderConnection{
-// 		c:                           connection,
-// 		previousNewReaderConnection: newReaderConnection,
-// 	}
-// 	// Set the global variable
-// 	newReaderConnection = c.newReaderConnection
-
-// 	return c
-// }
-
-// func (c *MockNewReaderConnection) newReaderConnection(reader io.Reader) Connection {
-// 	c.reader = reader
-// 	return c.Connection
-// }
-
-// func (c *mockNewReaderConnection) Unpatch() {
-// 	// Restore the global variable
-// 	newReaderConnection = c.previousNewReaderConnection
-// }
+func mockInputContextFixture(reader io.Reader) *config.InputContext {
+	return &config.InputContext{Reader: reader}
+}
 
 func TestReadFromReader(t *testing.T) {
 	// GIVEN
 	delimitedText := "This|is|the|header\n" +
 		"Fields|in|the|record\n"
 
-	r := strings.NewReader(delimitedText)
-	connection := NewReaderConnection(r)
+	r := readerFixture(delimitedText)
+	inputContext := mockInputContextFixture(r)
+	connection := NewReaderConnection(inputContext)
 
 	expected := map[string]interface{}{
 		"delimitedText": delimitedText,
