@@ -1,11 +1,14 @@
 package main
 
 import (
+	"errors"
+	"log"
 	"reflect"
 	"testing"
 
 	"local.dev/sheetsLoader/internal/config"
 	"local.dev/sheetsLoader/internal/operator"
+	"local.dev/sheetsLoader/internal/testutils"
 	"local.dev/sheetsLoader/internal/testutils/fixture"
 )
 
@@ -129,6 +132,7 @@ func TestRun(t *testing.T) {
 		}
 	}
 
+	noError := []interface{}{}
 	expected := map[string]interface{}{
 		"credentialsFilePath":    credentialsFilePath,
 		"spreadsheetId":          spreadsheetId,
@@ -140,10 +144,17 @@ func TestRun(t *testing.T) {
 		"googleSheetsConnection": googleSheetsConnection,
 		"readerConnection":       readerConnection,
 		"iterator":               it,
+		"error":                  noError,
 	}
 
 	// WHEN
-	run(appContextFactory)
+	var err []interface{} = noError
+	run(
+		appContextFactory,
+		func(v ...interface{}) {
+			err = v
+		},
+	)
 	actual := map[string]interface{}{
 		"credentialsFilePath":    factory.credentialsFilePath,
 		"spreadsheetId":          factory.spreadsheetId,
@@ -155,8 +166,8 @@ func TestRun(t *testing.T) {
 		"googleSheetsConnection": output.c.(*mockGoogleSheetsConnection),
 		"readerConnection":       input.c.(*mockReaderConnection),
 		"iterator":               output.it.(*mockIterator),
+		"error":                  err,
 	}
-	// THEN
 
 	// THEN
 	if !reflect.DeepEqual(actual, expected) {
@@ -165,5 +176,128 @@ func TestRun(t *testing.T) {
 			expected,
 			actual,
 		)
+	}
+}
+
+func TestRunFailures(t *testing.T) {
+	// GIVEN
+	expected := errors.New("An error")
+	testcases := []struct {
+		testcase        string
+		connectionError error
+		inputError      error
+		outputError     error
+		expectedError   error
+	}{
+		{
+			testcase:        "ConnectionError",
+			connectionError: expected,
+			inputError:      nil,
+			outputError:     nil,
+		},
+		{
+			testcase:        "InputError",
+			connectionError: nil,
+			inputError:      expected,
+			outputError:     nil,
+		},
+		{
+			testcase:        "OutputError",
+			connectionError: nil,
+			inputError:      nil,
+			outputError:     expected,
+		},
+	}
+
+	for _, tt := range testcases {
+		t.Run(
+			tt.testcase,
+			func(t *testing.T) {
+				credentialsFilePath := fixture.CredentialsFilePath()
+				spreadsheetId := fixture.SpreadsheetId()
+				sheetTitle := fixture.SheetTitle()
+				rowIndex := fixture.RowIndex()
+				colIndex := fixture.ColIndex()
+				cellRef := fixture.CellRef(sheetTitle, rowIndex, colIndex)
+				delimiter := fixture.Delimiter()
+				scopes := fixture.Scopes()
+
+				it := &mockIterator{}
+				googleSheetsConnection := &mockGoogleSheetsConnection{}
+				output := &mockOutput{err: tt.outputError}
+				readerConnection := &mockReaderConnection{}
+				input := &mockInput{err: tt.inputError, it: it}
+				googleContext := &config.GoogleContext{}
+				inputContext := &config.InputContext{}
+
+				factory := &mockFactory{
+					googleSheetsConnection: googleSheetsConnection,
+					googleSheetsOutput:     output,
+					readerConnection:       readerConnection,
+					delimitedTextInput:     input,
+					err:                    tt.connectionError,
+				}
+
+				appContextFactory := func() *appContext {
+					return &appContext{
+						CredentialsFilePath:           credentialsFilePath,
+						SpreadsheetId:                 spreadsheetId,
+						CellRef:                       cellRef,
+						Delimiter:                     delimiter,
+						Scopes:                        scopes,
+						GoogleContextFactory:          func() *config.GoogleContext { return googleContext },
+						InputContextFactory:           func() *config.InputContext { return inputContext },
+						GoogleSheetsConnectionFactory: factory.newGoogleSheetsConnection,
+						GoogleSheetsOutputFactory:     factory.newGoogleSheetsOutput,
+						ReaderConnectionFactory:       factory.newReaderConnection,
+						DelimitedTextInputFactory:     factory.newDelimitedTextInput,
+					}
+				}
+
+				// WHEN
+				var actual interface{}
+				run(
+					appContextFactory,
+					func(v ...interface{}) {
+						actual = v[0]
+					},
+				)
+
+				// THEN
+				if actual != expected {
+					t.Errorf("TestRun: expected run() to report an error and it didn't.")
+				}
+			},
+		)
+	}
+}
+
+func TestMain(t *testing.T) {
+	// GIVEN
+	oldRun := run
+	defer func() { run = oldRun }()
+
+	var storedAppContextFactory appContextFactory
+	var storedErrorReporter errorReporter
+	run = func(factory appContextFactory, reportError errorReporter) {
+		storedAppContextFactory = factory
+		storedErrorReporter = reportError
+	}
+
+	expected := map[string]interface{}{
+		"appContextFactory": testutils.GetFnPtr(newAppContext),
+		"errorReporter":     testutils.GetFnPtr(log.Fatal),
+	}
+
+	// WHEN
+	main()
+	actual := map[string]interface{}{
+		"appContextFactory": testutils.GetFnPtr(storedAppContextFactory),
+		"errorReporter":     testutils.GetFnPtr(storedErrorReporter),
+	}
+
+	// THEN
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("TestMain: expected %v actual %v", expected, actual)
 	}
 }
