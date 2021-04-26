@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 
 	"google.golang.org/api/sheets/v4"
@@ -22,11 +23,15 @@ type appContext struct {
 	DelimitedTextInputFactory     func() operator.Input
 }
 
-func newAppContext() *appContext {
+func newAppContext() (*appContext, error) {
 	credentialsFilePath := os.Getenv("CREDENTIALS_FILEPATH")
 	spreadsheetId := os.Getenv("SPREADSHEET_ID")
 	cellRef := os.Getenv("CELL_REF")
 	delimiter := os.Getenv("DELIMITER")
+	if credentialsFilePath == "" || spreadsheetId == "" || cellRef == "" || delimiter == "" {
+		return nil, errors.New("environment variables CREDENTIALS_FILEPATH, SPREADSHEET_ID, CELL_REF, and DELIMITER must be set")
+	}
+	err := error(nil)
 	scopes := []string{
 		sheets.SpreadsheetsScope,
 	}
@@ -43,5 +48,5 @@ func newAppContext() *appContext {
 		GoogleSheetsOutputFactory:     operator.NewGoogleSheetsOutput,
 		ReaderConnectionFactory:       operator.NewReaderConnection,
 		DelimitedTextInputFactory:     operator.NewDelimitedTextInput,
-	}
+	}, err
 }

@@ -42,10 +42,11 @@ func TestNewAppContext(t *testing.T) {
 		"GoogleSheetsOutputFactory":     testutils.GetFnPtr(operator.NewGoogleSheetsOutput),
 		"ReaderConnectionFactory":       testutils.GetFnPtr(operator.NewReaderConnection),
 		"DelimitedTextInputFactory":     testutils.GetFnPtr(operator.NewDelimitedTextInput),
+		"error":                         nil,
 	}
 
 	// WHEN
-	appContext := newAppContext()
+	appContext, err := newAppContext()
 	actual := map[string]interface{}{
 		"CredentialsFilePath":           appContext.CredentialsFilePath,
 		"SpreadsheetId":                 appContext.SpreadsheetId,
@@ -58,6 +59,7 @@ func TestNewAppContext(t *testing.T) {
 		"GoogleSheetsOutputFactory":     testutils.GetFnPtr(appContext.GoogleSheetsOutputFactory),
 		"ReaderConnectionFactory":       testutils.GetFnPtr(appContext.ReaderConnectionFactory),
 		"DelimitedTextInputFactory":     testutils.GetFnPtr(appContext.DelimitedTextInputFactory),
+		"error":                         err,
 	}
 
 	// THEN
@@ -66,6 +68,65 @@ func TestNewAppContext(t *testing.T) {
 			"TestAppContext: expected: %v, actual %v",
 			expected,
 			actual,
+		)
+	}
+}
+
+func TestNewAppContextFailures(t *testing.T) {
+	// GIVEN
+	allEnvVars := []string{
+		"CREDENTIALS_FILEPATH",
+		"SPREADSHEET_ID",
+		"CELL_REF",
+		"DELIMITER",
+	}
+	// Clear the environment.
+	os.Clearenv()
+	// The program expects to caller to set all environment variables.
+	// For each test case, set the environment variable to skip.
+	// If there is no error, then the code did not check for that env variable.
+	testcases := []struct {
+		testcase string
+		skip     string
+	}{
+		{
+			testcase: "CREDENTIALS_FILEPATH",
+			skip:     "CREDENTIALS_FILEPATH",
+		},
+		{
+			testcase: "SPREADSHEET_ID",
+			skip:     "SPREADSHEET_ID",
+		},
+		{
+			testcase: "CELL_REF",
+			skip:     "CELL_REF",
+		},
+		{
+			testcase: "DELIMITER",
+			skip:     "DELIMITER",
+		},
+	}
+
+	for _, tt := range testcases {
+		t.Run(
+			tt.testcase,
+			func(t *testing.T) {
+				// GIVEN
+				for _, envVar := range allEnvVars {
+					if envVar != tt.skip {
+						os.Setenv(envVar, envVar)
+						defer os.Clearenv()
+					}
+				}
+
+				// WHEN
+				_, err := newAppContext()
+
+				// THEN
+				if err == nil {
+					t.Errorf("expected an error and got none.")
+				}
+			},
 		)
 	}
 }

@@ -1,16 +1,21 @@
 package main
 
-import "log"
+import (
+	"log"
+	"os"
+)
 
 // In order to test the main function,
 // make a run() function that main invokes a variable
 // that the test can update.
-type appContextFactory func() *appContext
-type errorReporter func(v ...interface{})
-type runFn func(factory appContextFactory, reportError errorReporter)
+type appContextFactory func() (*appContext, error)
+type runFn func(factory appContextFactory) error
 
-var run runFn = func(factory appContextFactory, reportError errorReporter) {
-	appContext := factory()
+var run runFn = func(factory appContextFactory) error {
+	appContext, err := factory()
+	if err != nil {
+		return err
+	}
 
 	googleContext := appContext.GoogleContextFactory()
 	inputContext := appContext.InputContextFactory()
@@ -24,7 +29,7 @@ var run runFn = func(factory appContextFactory, reportError errorReporter) {
 		appContext.Scopes...,
 	)
 	if err != nil {
-		reportError(err)
+		return err
 	}
 	output := appContext.GoogleSheetsOutputFactory(
 		appContext.SpreadsheetId,
@@ -34,14 +39,21 @@ var run runFn = func(factory appContextFactory, reportError errorReporter) {
 
 	it, err := input.Read(readerConnection)
 	if err != nil {
-		reportError(err)
+		return err
 	}
 	err = output.Write(googleSheetsConnection, it)
 	if err != nil {
-		reportError(err)
+		return err
 	}
+	return nil
 }
 
 func main() {
-	run(newAppContext, log.Fatal)
+	err := run(newAppContext)
+	if err != nil {
+		// The test will not cover these two lines of code.
+		// Change it your own risk.
+		log.Fatal(err)
+		os.Exit(1)
+	}
 }

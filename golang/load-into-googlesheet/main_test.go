@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"log"
 	"reflect"
 	"testing"
 
@@ -116,7 +115,7 @@ func TestRun(t *testing.T) {
 		delimitedTextInput:     input,
 	}
 
-	appContextFactory := func() *appContext {
+	appContextFactory := func() (*appContext, error) {
 		return &appContext{
 			CredentialsFilePath:           credentialsFilePath,
 			SpreadsheetId:                 spreadsheetId,
@@ -129,10 +128,9 @@ func TestRun(t *testing.T) {
 			GoogleSheetsOutputFactory:     factory.newGoogleSheetsOutput,
 			ReaderConnectionFactory:       factory.newReaderConnection,
 			DelimitedTextInputFactory:     factory.newDelimitedTextInput,
-		}
+		}, nil
 	}
 
-	noError := []interface{}{}
 	expected := map[string]interface{}{
 		"credentialsFilePath":    credentialsFilePath,
 		"spreadsheetId":          spreadsheetId,
@@ -144,17 +142,11 @@ func TestRun(t *testing.T) {
 		"googleSheetsConnection": googleSheetsConnection,
 		"readerConnection":       readerConnection,
 		"iterator":               it,
-		"error":                  noError,
+		"error":                  nil,
 	}
 
 	// WHEN
-	var err []interface{} = noError
-	run(
-		appContextFactory,
-		func(v ...interface{}) {
-			err = v
-		},
-	)
+	err := run(appContextFactory)
 	actual := map[string]interface{}{
 		"credentialsFilePath":    factory.credentialsFilePath,
 		"spreadsheetId":          factory.spreadsheetId,
@@ -184,28 +176,27 @@ func TestRunFailures(t *testing.T) {
 	expected := errors.New("An error")
 	testcases := []struct {
 		testcase        string
+		appContextError error
 		connectionError error
 		inputError      error
 		outputError     error
 		expectedError   error
 	}{
 		{
+			testcase:        "NewAppContextError",
+			appContextError: expected,
+		},
+		{
 			testcase:        "ConnectionError",
 			connectionError: expected,
-			inputError:      nil,
-			outputError:     nil,
 		},
 		{
-			testcase:        "InputError",
-			connectionError: nil,
-			inputError:      expected,
-			outputError:     nil,
+			testcase:   "InputError",
+			inputError: expected,
 		},
 		{
-			testcase:        "OutputError",
-			connectionError: nil,
-			inputError:      nil,
-			outputError:     expected,
+			testcase:    "OutputError",
+			outputError: expected,
 		},
 	}
 
@@ -238,7 +229,7 @@ func TestRunFailures(t *testing.T) {
 					err:                    tt.connectionError,
 				}
 
-				appContextFactory := func() *appContext {
+				appContextFactory := func() (*appContext, error) {
 					return &appContext{
 						CredentialsFilePath:           credentialsFilePath,
 						SpreadsheetId:                 spreadsheetId,
@@ -251,17 +242,11 @@ func TestRunFailures(t *testing.T) {
 						GoogleSheetsOutputFactory:     factory.newGoogleSheetsOutput,
 						ReaderConnectionFactory:       factory.newReaderConnection,
 						DelimitedTextInputFactory:     factory.newDelimitedTextInput,
-					}
+					}, tt.appContextError
 				}
 
 				// WHEN
-				var actual interface{}
-				run(
-					appContextFactory,
-					func(v ...interface{}) {
-						actual = v[0]
-					},
-				)
+				actual := run(appContextFactory)
 
 				// THEN
 				if actual != expected {
@@ -278,22 +263,19 @@ func TestMain(t *testing.T) {
 	defer func() { run = oldRun }()
 
 	var storedAppContextFactory appContextFactory
-	var storedErrorReporter errorReporter
-	run = func(factory appContextFactory, reportError errorReporter) {
+	run = func(factory appContextFactory) error {
 		storedAppContextFactory = factory
-		storedErrorReporter = reportError
+		return nil
 	}
 
 	expected := map[string]interface{}{
 		"appContextFactory": testutils.GetFnPtr(newAppContext),
-		"errorReporter":     testutils.GetFnPtr(log.Fatal),
 	}
 
 	// WHEN
 	main()
 	actual := map[string]interface{}{
 		"appContextFactory": testutils.GetFnPtr(storedAppContextFactory),
-		"errorReporter":     testutils.GetFnPtr(storedErrorReporter),
 	}
 
 	// THEN
