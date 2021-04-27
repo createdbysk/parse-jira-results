@@ -29,7 +29,7 @@ func parseCommandLineArgs(args []string) (string, error) {
 
 	flagSet.Parse(args)
 	if flagSet.NArg() < 1 {
-		return "", errors.New("must provide cell reference as command-line parameter")
+		return "", errors.New("must provide the destination cell reference as command-line parameter")
 	}
 
 	cellRef := flagSet.Arg(0)
@@ -42,8 +42,8 @@ func newAppContext(args []string) (*appContext, error) {
 	spreadsheetId := os.Getenv("SPREADSHEET_ID")
 	delimiter := os.Getenv("DELIMITER")
 	cellRef, err := parseCommandLineArgs(args)
-	if credentialsFilePath == "" || spreadsheetId == "" || cellRef == "" || delimiter == "" {
-		return nil, errors.New("environment variables CREDENTIALS_FILEPATH, SPREADSHEET_ID, CELL_REF, and DELIMITER must be set")
+	if credentialsFilePath == "" || spreadsheetId == "" || delimiter == "" {
+		return nil, errors.New("must set environment variables CREDENTIALS_FILEPATH, SPREADSHEET_ID, and DELIMITER")
 	}
 	scopes := []string{
 		sheets.SpreadsheetsScope,

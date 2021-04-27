@@ -84,25 +84,31 @@ func TestNewAppContextFailures(t *testing.T) {
 	// The program expects to caller to set all environment variables.
 	// For each test case, set the environment variable to skip.
 	// If there is no error, then the code did not check for that env variable.
+	mustSetEnvironmentVariables := "must set environment variables CREDENTIALS_FILEPATH, SPREADSHEET_ID, and DELIMITER"
 	testcases := []struct {
-		testcase string
-		skip     string
+		testcase            string
+		skip                string
+		expectedErrorString string
 	}{
 		{
-			testcase: "CREDENTIALS_FILEPATH",
-			skip:     "CREDENTIALS_FILEPATH",
+			testcase:            "CREDENTIALS_FILEPATH",
+			skip:                "CREDENTIALS_FILEPATH",
+			expectedErrorString: mustSetEnvironmentVariables,
 		},
 		{
-			testcase: "SPREADSHEET_ID",
-			skip:     "SPREADSHEET_ID",
+			testcase:            "SPREADSHEET_ID",
+			skip:                "SPREADSHEET_ID",
+			expectedErrorString: mustSetEnvironmentVariables,
 		},
 		{
-			testcase: "CELL_REF",
-			skip:     "CELL_REF",
+			testcase:            "CELL_REF",
+			skip:                "CELL_REF",
+			expectedErrorString: "must provide the destination cell reference as command-line parameter",
 		},
 		{
-			testcase: "DELIMITER",
-			skip:     "DELIMITER",
+			testcase:            "DELIMITER",
+			skip:                "DELIMITER",
+			expectedErrorString: mustSetEnvironmentVariables,
 		},
 	}
 
@@ -127,7 +133,13 @@ func TestNewAppContextFailures(t *testing.T) {
 
 				// THEN
 				if err == nil {
-					t.Errorf("expected an error and got none.")
+					t.Errorf("expected an error and got none")
+				} else if err.Error() != tt.expectedErrorString {
+					t.Errorf(
+						"expected an error with text %v, got text %v",
+						tt.expectedErrorString,
+						err.Error(),
+					)
 				}
 			},
 		)
