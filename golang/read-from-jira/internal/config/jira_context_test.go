@@ -27,7 +27,7 @@ func TestNewJiraBasicAuth(t *testing.T) {
 
 func TestNewJiraContextDependencies(t *testing.T) {
 	// GIVEN
-	expected := JiraContextDependencies{
+	expected := &JiraContextDependencies{
 		&jiraBasicAuthFactory,
 		&jiraConnectionFactory,
 		&readFile,
@@ -36,7 +36,7 @@ func TestNewJiraContextDependencies(t *testing.T) {
 	}
 
 	// WHEN
-	actual := *NewJiraContextDependencies()
+	actual := NewJiraContextDependencies()
 
 	// THEN
 	// if actual.NewHttpClient != expected.NewHttpClient ||

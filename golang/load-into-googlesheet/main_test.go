@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"os"
 	"reflect"
 	"testing"
 
@@ -107,6 +108,7 @@ func TestRun(t *testing.T) {
 	input := &mockInput{err: nil, it: it}
 	googleContext := &config.GoogleContext{}
 	inputContext := &config.InputContext{}
+	commandlineArgs := []string{cellRef}
 
 	factory := &mockFactory{
 		googleSheetsConnection: googleSheetsConnection,
@@ -115,7 +117,7 @@ func TestRun(t *testing.T) {
 		delimitedTextInput:     input,
 	}
 
-	appContextFactory := func() (*appContext, error) {
+	appContextFactory := func(args []string) (*appContext, error) {
 		return &appContext{
 			CredentialsFilePath:           credentialsFilePath,
 			SpreadsheetId:                 spreadsheetId,
@@ -146,7 +148,7 @@ func TestRun(t *testing.T) {
 	}
 
 	// WHEN
-	err := run(appContextFactory)
+	err := run(appContextFactory, commandlineArgs)
 	actual := map[string]interface{}{
 		"credentialsFilePath":    factory.credentialsFilePath,
 		"spreadsheetId":          factory.spreadsheetId,
@@ -220,6 +222,7 @@ func TestRunFailures(t *testing.T) {
 				input := &mockInput{err: tt.inputError, it: it}
 				googleContext := &config.GoogleContext{}
 				inputContext := &config.InputContext{}
+				commandlineArgs := []string{cellRef}
 
 				factory := &mockFactory{
 					googleSheetsConnection: googleSheetsConnection,
@@ -229,7 +232,7 @@ func TestRunFailures(t *testing.T) {
 					err:                    tt.connectionError,
 				}
 
-				appContextFactory := func() (*appContext, error) {
+				appContextFactory := func(args []string) (*appContext, error) {
 					return &appContext{
 						CredentialsFilePath:           credentialsFilePath,
 						SpreadsheetId:                 spreadsheetId,
@@ -246,7 +249,7 @@ func TestRunFailures(t *testing.T) {
 				}
 
 				// WHEN
-				actual := run(appContextFactory)
+				actual := run(appContextFactory, commandlineArgs)
 
 				// THEN
 				if actual != expected {
@@ -262,20 +265,26 @@ func TestMain(t *testing.T) {
 	oldRun := run
 	defer func() { run = oldRun }()
 
+	os.Args = []string{"fakeProgramName", "fakeCellRef"}
+
 	var storedAppContextFactory appContextFactory
-	run = func(factory appContextFactory) error {
+	var storedCommandLineArgs []string
+	run = func(factory appContextFactory, args []string) error {
 		storedAppContextFactory = factory
+		storedCommandLineArgs = args
 		return nil
 	}
 
 	expected := map[string]interface{}{
 		"appContextFactory": testutils.GetFnPtr(newAppContext),
+		"commandLineArgs":   os.Args[1:],
 	}
 
 	// WHEN
 	main()
 	actual := map[string]interface{}{
 		"appContextFactory": testutils.GetFnPtr(storedAppContextFactory),
+		"commandLineArgs":   storedCommandLineArgs,
 	}
 
 	// THEN

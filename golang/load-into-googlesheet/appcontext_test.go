@@ -19,14 +19,14 @@ func TestNewAppContext(t *testing.T) {
 	spreadsheetId := fixture.SpreadsheetId()
 	os.Setenv("SPREADSHEET_ID", spreadsheetId)
 
+	delimiter := fixture.Delimiter()
+	os.Setenv("DELIMITER", delimiter)
+
 	sheetTitle := fixture.SheetTitle()
 	rowIndex := fixture.RowIndex()
 	colIndex := fixture.ColIndex()
 	cellRef := fixture.CellRef(sheetTitle, rowIndex, colIndex)
-	os.Setenv("CELL_REF", cellRef)
-
-	delimiter := fixture.Delimiter()
-	os.Setenv("DELIMITER", delimiter)
+	args := []string{cellRef}
 
 	scopes := fixture.Scopes()
 
@@ -46,7 +46,7 @@ func TestNewAppContext(t *testing.T) {
 	}
 
 	// WHEN
-	appContext, err := newAppContext()
+	appContext, err := newAppContext(args)
 	actual := map[string]interface{}{
 		"CredentialsFilePath":           appContext.CredentialsFilePath,
 		"SpreadsheetId":                 appContext.SpreadsheetId,
@@ -77,7 +77,6 @@ func TestNewAppContextFailures(t *testing.T) {
 	allEnvVars := []string{
 		"CREDENTIALS_FILEPATH",
 		"SPREADSHEET_ID",
-		"CELL_REF",
 		"DELIMITER",
 	}
 	// Clear the environment.
@@ -118,9 +117,13 @@ func TestNewAppContextFailures(t *testing.T) {
 						defer os.Clearenv()
 					}
 				}
+				var args []string
+				if tt.skip != "CELL_REF" {
+					args = []string{"CELL_REF"}
+				}
 
 				// WHEN
-				_, err := newAppContext()
+				_, err := newAppContext(args)
 
 				// THEN
 				if err == nil {

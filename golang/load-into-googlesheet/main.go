@@ -8,11 +8,11 @@ import (
 // In order to test the main function,
 // make a run() function that main invokes a variable
 // that the test can update.
-type appContextFactory func() (*appContext, error)
-type runFn func(factory appContextFactory) error
+type appContextFactory func(args []string) (*appContext, error)
+type runFn func(factory appContextFactory, args []string) error
 
-var run runFn = func(factory appContextFactory) error {
-	appContext, err := factory()
+var run runFn = func(factory appContextFactory, args []string) error {
+	appContext, err := factory(args)
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ var run runFn = func(factory appContextFactory) error {
 }
 
 func main() {
-	err := run(newAppContext)
+	err := run(newAppContext, os.Args[1:])
 	if err != nil {
 		// The test will not cover these two lines of code.
 		// Change it your own risk.
