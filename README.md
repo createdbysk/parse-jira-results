@@ -20,7 +20,7 @@ Implements the ability to parse the results from the JIRA rest API queries.
 
         CREDENTIALS_FILEPATH=$(echo /path/to/credentials/file) SPREADSHEET_ID={:spreadsheet_id}DELIMITER="|" ./load-into-googlesheet/sheetsLoader 'TestSheet!A2'
 
-* The command-parameter is the Destination Cell Reference. It MUST include the single quotes ('') at least on the bash command-line because '!' is the symbol in bash to access history.
+* The command-parameter is the Destination Cell Reference. It MUST include the single quotes ('') at least on the bash command-line because ! is the symbol in bash to access history.
 * Use echo in $(echo /path/to/credentials/file) to expand to the full path.
 * Replace {:spreadsheet_id} with the actual spreadsheet id, which you can find in the google sheets URL of the form
 
