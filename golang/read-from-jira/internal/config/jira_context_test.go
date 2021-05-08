@@ -3,12 +3,14 @@ package config
 import (
 	"bytes"
 	"errors"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"reflect"
 	"testing"
 
 	"local.dev/jira/internal/operator"
+	"local.dev/jira/internal/testutils"
 )
 
 func TestNewJiraBasicAuth(t *testing.T) {
@@ -27,23 +29,25 @@ func TestNewJiraBasicAuth(t *testing.T) {
 
 func TestNewJiraContextDependencies(t *testing.T) {
 	// GIVEN
-	expected := &JiraContextDependencies{
-		&jiraBasicAuthFactory,
-		&jiraConnectionFactory,
-		&readFile,
-		&jiraQueryFactory,
-		&templateRendererFactory,
+	expected := map[string]uintptr{
+		"NewJiraBasicAuthFnPtr":    testutils.GetFnPtr(NewJiraBasicAuth),
+		"NewJiraConnectionFnPtr":   testutils.GetFnPtr(operator.NewJiraConnection),
+		"ReadFileFnPtr":            testutils.GetFnPtr(ioutil.ReadFile),
+		"NewJiraQueryFnPtr":        testutils.GetFnPtr(operator.NewJiraQuery),
+		"NewTemplateRendererFnPtr": testutils.GetFnPtr(operator.NewTemplateRenderer),
 	}
 
 	// WHEN
-	actual := NewJiraContextDependencies()
+	jiraContextDependencies := NewJiraContextDependencies()
+	actual := map[string]uintptr{
+		"NewJiraBasicAuthFnPtr":    testutils.GetFnPtr(jiraContextDependencies.NewHttpClient),
+		"NewJiraConnectionFnPtr":   testutils.GetFnPtr(jiraContextDependencies.NewJiraConnection),
+		"ReadFileFnPtr":            testutils.GetFnPtr(jiraContextDependencies.ReadFile),
+		"NewJiraQueryFnPtr":        testutils.GetFnPtr(jiraContextDependencies.NewJiraQuery),
+		"NewTemplateRendererFnPtr": testutils.GetFnPtr(jiraContextDependencies.NewTemplateRenderer),
+	}
 
 	// THEN
-	// if actual.NewHttpClient != expected.NewHttpClient ||
-	// 	actual.NewJiraConnection != expected.NewJiraConnection ||
-	// 	actual.ReadFile != expected.ReadFile ||
-	// 	actual.NewJiraQuery != expected.NewJiraQueryactual ||
-	// 	actual.NewTemplateRenderer != expected.NewTemplateRenderer {
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf(
 			"%v test: expected %v, actual %v",
@@ -108,11 +112,11 @@ func TestNewJiraContext(t *testing.T) {
 	}
 
 	di := &JiraContextDependencies{
-		&mockClientFactory,
-		&mockConnectionFactory,
-		&mockReadFile,
-		&mockQueryFactory,
-		&mockRendererFactory,
+		mockClientFactory,
+		mockConnectionFactory,
+		mockReadFile,
+		mockQueryFactory,
+		mockRendererFactory,
 	}
 
 	testcases := []struct {
