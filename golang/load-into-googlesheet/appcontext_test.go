@@ -16,8 +16,8 @@ func TestNewAppContext(t *testing.T) {
 	credentialsFilePath := fixture.CredentialsFilePath()
 	os.Setenv("CREDENTIALS_FILEPATH", credentialsFilePath)
 
-	spreadsheetId := fixture.SpreadsheetId()
-	os.Setenv("SPREADSHEET_ID", spreadsheetId)
+	spreadsheetID := fixture.SpreadsheetId()
+	os.Setenv("SPREADSHEET_ID", spreadsheetID)
 
 	delimiter := fixture.Delimiter()
 	os.Setenv("DELIMITER", delimiter)
@@ -25,15 +25,16 @@ func TestNewAppContext(t *testing.T) {
 	sheetTitle := fixture.SheetTitle()
 	rowIndex := fixture.RowIndex()
 	colIndex := fixture.ColIndex()
-	cellRef := fixture.CellRef(sheetTitle, rowIndex, colIndex)
-	args := []string{cellRef}
+	cellRef := fixture.CellRef(rowIndex, colIndex)
+	scopedCellRef := fixture.ScopedCellRef(sheetTitle, cellRef)
+	args := []string{sheetTitle, cellRef}
 
 	scopes := fixture.Scopes()
 
 	expected := map[string]interface{}{
 		"CredentialsFilePath":           credentialsFilePath,
-		"SpreadsheetId":                 spreadsheetId,
-		"CellRef":                       cellRef,
+		"SpreadsheetId":                 spreadsheetID,
+		"CellRef":                       scopedCellRef,
 		"Delimiter":                     delimiter,
 		"Scopes":                        scopes,
 		"GoogleContextFactory":          testutils.GetFnPtr(config.NewGoogleContext),
@@ -101,9 +102,14 @@ func TestNewAppContextFailures(t *testing.T) {
 			expectedErrorString: mustSetEnvironmentVariables,
 		},
 		{
+			testcase:            "SHEET_TITLE",
+			skip:                "SHEET_TITLE",
+			expectedErrorString: "must provide the sheet title and destination cell reference as command-line parameters",
+		},
+		{
 			testcase:            "CELL_REF",
 			skip:                "CELL_REF",
-			expectedErrorString: "must provide the destination cell reference as command-line parameter",
+			expectedErrorString: "must provide the sheet title and destination cell reference as command-line parameters",
 		},
 		{
 			testcase:            "DELIMITER",
@@ -124,8 +130,11 @@ func TestNewAppContextFailures(t *testing.T) {
 					}
 				}
 				var args []string
+				if tt.skip != "SHEET_TITLE" {
+					args = append(args, "SHEET_TITLE")
+				}
 				if tt.skip != "CELL_REF" {
-					args = []string{"CELL_REF"}
+					args = append(args, "CELL_REF")
 				}
 
 				// WHEN

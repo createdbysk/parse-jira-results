@@ -22,14 +22,22 @@ func ColIndex() int64 {
 	return 24
 }
 
-func CellRef(sheetTitle string, rowIndex int64, colIndex int64) string {
+func CellRef(rowIndex int64, colIndex int64) string {
 	cellRef := fmt.Sprintf(
-		"%s!%v%v",
-		sheetTitle,
+		"%v%v",
 		string(rune(int64('A')+colIndex)),
 		rowIndex+1,
 	)
 	return cellRef
+}
+
+func ScopedCellRef(sheetTitle string, cellRef string) string {
+	scopedCellRef := fmt.Sprintf(
+		"%s!%s",
+		sheetTitle,
+		cellRef,
+	)
+	return scopedCellRef
 }
 
 func CredentialsFilePath() string {

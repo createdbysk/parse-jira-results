@@ -56,7 +56,7 @@ func (i *mockInput) Read(c operator.Connection) (operator.Iterator, error) {
 type mockFactory struct {
 	credentialsFilePath    string
 	scopes                 []string
-	spreadsheetId          string
+	spreadsheetID          string
 	cellRef                string
 	delimiter              string
 	err                    error
@@ -74,8 +74,8 @@ func (f *mockFactory) newGoogleSheetsConnection(googleCtx *config.GoogleContext,
 	f.scopes = scope
 	return f.googleSheetsConnection, f.err
 }
-func (f *mockFactory) newGoogleSheetsOutput(spreadsheetId string, cellRef string, delimiter string) operator.Output {
-	f.spreadsheetId = spreadsheetId
+func (f *mockFactory) newGoogleSheetsOutput(spreadsheetID string, cellRef string, delimiter string) operator.Output {
+	f.spreadsheetID = spreadsheetID
 	f.cellRef = cellRef
 	f.delimiter = delimiter
 	return f.googleSheetsOutput
@@ -93,11 +93,11 @@ func (f *mockFactory) newDelimitedTextInput() operator.Input {
 func TestRun(t *testing.T) {
 	// GIVEN
 	credentialsFilePath := fixture.CredentialsFilePath()
-	spreadsheetId := fixture.SpreadsheetId()
+	spreadsheetID := fixture.SpreadsheetId()
 	sheetTitle := fixture.SheetTitle()
 	rowIndex := fixture.RowIndex()
 	colIndex := fixture.ColIndex()
-	cellRef := fixture.CellRef(sheetTitle, rowIndex, colIndex)
+	cellRef := fixture.CellRef(rowIndex, colIndex)
 	delimiter := fixture.Delimiter()
 	scopes := fixture.Scopes()
 
@@ -108,7 +108,8 @@ func TestRun(t *testing.T) {
 	input := &mockInput{err: nil, it: it}
 	googleContext := &config.GoogleContext{}
 	inputContext := &config.InputContext{}
-	commandlineArgs := []string{cellRef}
+	scopedCellRef := fixture.ScopedCellRef(sheetTitle, cellRef)
+	commandlineArgs := []string{sheetTitle, cellRef}
 
 	factory := &mockFactory{
 		googleSheetsConnection: googleSheetsConnection,
@@ -120,8 +121,8 @@ func TestRun(t *testing.T) {
 	appContextFactory := func(args []string) (*appContext, error) {
 		return &appContext{
 			CredentialsFilePath:           credentialsFilePath,
-			SpreadsheetId:                 spreadsheetId,
-			CellRef:                       cellRef,
+			SpreadsheetId:                 spreadsheetID,
+			CellRef:                       scopedCellRef,
 			Delimiter:                     delimiter,
 			Scopes:                        scopes,
 			GoogleContextFactory:          func() *config.GoogleContext { return googleContext },
@@ -135,8 +136,8 @@ func TestRun(t *testing.T) {
 
 	expected := map[string]interface{}{
 		"credentialsFilePath":    credentialsFilePath,
-		"spreadsheetId":          spreadsheetId,
-		"cellRef":                cellRef,
+		"spreadsheetId":          spreadsheetID,
+		"cellRef":                scopedCellRef,
 		"delimiter":              delimiter,
 		"scopes":                 scopes,
 		"googleContext":          googleContext,
@@ -151,7 +152,7 @@ func TestRun(t *testing.T) {
 	err := run(appContextFactory, commandlineArgs)
 	actual := map[string]interface{}{
 		"credentialsFilePath":    factory.credentialsFilePath,
-		"spreadsheetId":          factory.spreadsheetId,
+		"spreadsheetId":          factory.spreadsheetID,
 		"cellRef":                factory.cellRef,
 		"delimiter":              factory.delimiter,
 		"scopes":                 factory.scopes,
@@ -207,11 +208,11 @@ func TestRunFailures(t *testing.T) {
 			tt.testcase,
 			func(t *testing.T) {
 				credentialsFilePath := fixture.CredentialsFilePath()
-				spreadsheetId := fixture.SpreadsheetId()
+				spreadsheetID := fixture.SpreadsheetId()
 				sheetTitle := fixture.SheetTitle()
 				rowIndex := fixture.RowIndex()
 				colIndex := fixture.ColIndex()
-				cellRef := fixture.CellRef(sheetTitle, rowIndex, colIndex)
+				cellRef := fixture.CellRef(rowIndex, colIndex)
 				delimiter := fixture.Delimiter()
 				scopes := fixture.Scopes()
 
@@ -222,7 +223,8 @@ func TestRunFailures(t *testing.T) {
 				input := &mockInput{err: tt.inputError, it: it}
 				googleContext := &config.GoogleContext{}
 				inputContext := &config.InputContext{}
-				commandlineArgs := []string{cellRef}
+				scopedCellRef := fixture.ScopedCellRef(sheetTitle, cellRef)
+				commandlineArgs := []string{sheetTitle, cellRef}
 
 				factory := &mockFactory{
 					googleSheetsConnection: googleSheetsConnection,
@@ -235,8 +237,8 @@ func TestRunFailures(t *testing.T) {
 				appContextFactory := func(args []string) (*appContext, error) {
 					return &appContext{
 						CredentialsFilePath:           credentialsFilePath,
-						SpreadsheetId:                 spreadsheetId,
-						CellRef:                       cellRef,
+						SpreadsheetId:                 spreadsheetID,
+						CellRef:                       scopedCellRef,
 						Delimiter:                     delimiter,
 						Scopes:                        scopes,
 						GoogleContextFactory:          func() *config.GoogleContext { return googleContext },

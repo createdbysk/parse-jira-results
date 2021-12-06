@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"os"
 
 	"google.golang.org/api/sheets/v4"
@@ -24,27 +25,33 @@ type appContext struct {
 	DelimitedTextInputFactory     func() operator.Input
 }
 
-func parseCommandLineArgs(args []string) (string, error) {
+func parseCommandLineArgs(args []string) (string, string, error) {
 	flagSet := flag.NewFlagSet("", flag.ContinueOnError)
 
 	flagSet.Parse(args)
-	if flagSet.NArg() < 1 {
-		return "", errors.New("must provide the destination cell reference as command-line parameter")
+	if flagSet.NArg() < 2 {
+		return "", "", errors.New("must provide the sheet title and destination cell reference as command-line parameters")
 	}
 
-	cellRef := flagSet.Arg(0)
+	sheetTitle := flagSet.Arg(0)
+	cellRef := flagSet.Arg(1)
 
-	return cellRef, nil
+	return sheetTitle, cellRef, nil
 }
 
 func newAppContext(args []string) (*appContext, error) {
 	credentialsFilePath := os.Getenv("CREDENTIALS_FILEPATH")
 	spreadsheetId := os.Getenv("SPREADSHEET_ID")
 	delimiter := os.Getenv("DELIMITER")
-	cellRef, err := parseCommandLineArgs(args)
+	sheetTitle, cellRef, err := parseCommandLineArgs(args)
 	if credentialsFilePath == "" || spreadsheetId == "" || delimiter == "" {
 		return nil, errors.New("must set environment variables CREDENTIALS_FILEPATH, SPREADSHEET_ID, and DELIMITER")
 	}
+	scopedCellRef := fmt.Sprintf(
+		"%s!%s",
+		sheetTitle,
+		cellRef,
+	)
 	scopes := []string{
 		sheets.SpreadsheetsScope,
 	}
@@ -52,7 +59,7 @@ func newAppContext(args []string) (*appContext, error) {
 	return &appContext{
 		CredentialsFilePath:           credentialsFilePath,
 		SpreadsheetId:                 spreadsheetId,
-		CellRef:                       cellRef,
+		CellRef:                       scopedCellRef,
 		Delimiter:                     delimiter,
 		Scopes:                        scopes,
 		GoogleContextFactory:          config.NewGoogleContext,
