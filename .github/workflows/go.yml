@@ -23,6 +23,15 @@ jobs:
         pushd golang/read-from-jira
         go build -v ./...
         popd
+        pushd golang/load-into-googlesheet
+        go build -v ./...
+        popd
 
     - name: Test
-      run: go test -v ./...
+      run: |
+        pushd golang/read-from-jira
+        go test -v ./...
+        popd
+        pushd golang/load-into-googlesheet
+        go test -v ./...
+        popd
